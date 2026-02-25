@@ -5,14 +5,14 @@
     <div class="todo-header">
         <h1><i class="bi bi-exclamation-triangle text-danger"></i> Delete Todo</h1>
     </div>
-    
+
     <div class="alert alert-danger">
         <h4 class="alert-heading">Warning!</h4>
         <p>Are you sure you want to delete "{{ todo.title }}"?</p>
         <hr>
         <p class="mb-0">This action cannot be undone.</p>
     </div>
-    
+
     <form method="post">
         {% csrf_token %}
         <div class="d-flex gap-2">

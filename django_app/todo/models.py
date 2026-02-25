@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 
+
 class Todo(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
@@ -12,4 +13,4 @@ class Todo(models.Model):
         return self.title
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
