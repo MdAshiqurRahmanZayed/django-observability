@@ -1,0 +1,54 @@
+{% extends 'todo/base.html' %}
+
+{% block content %}
+  <div class="todo-container">
+    <div class="todo-header">
+      <h1><i class="bi bi-check2-square"></i> Todo List</h1>
+      <p class="text-muted">Organize your tasks efficiently</p>
+    </div>
+
+    <div class="create-btn">
+      <a href="{% url 'todo:todo_create' %}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Create New Todo</a>
+    </div>
+
+    {% if todos %}
+      {% for todo in todos %}
+        <div class="todo-item {% if todo.completed %}completed{% endif %}">
+          <div class="row">
+            <div class="col-md-8">
+              <div class="todo-title {% if todo.completed %}completed{% endif %}">{{ todo.title }}</div>
+              {% if todo.description %}
+                <div class="todo-description">{{ todo.description }}</div>
+              {% endif %}
+              <small class="text-muted">Created: {{ todo.created_at|date:'M d, Y H:i' }}</small>
+            </div>
+            <div class="col-md-4">
+              <div class="todo-actions">
+                <a href="{% url 'todo:todo_toggle' todo.pk %}"
+                  class="btn btn-sm {% if todo.completed %}
+                    btn-warning
+                  {% else %}
+                    btn-success
+                  {% endif %}">
+                  {% if todo.completed %}
+                    <i class="bi bi-arrow-counterclockwise"></i> Undo
+                  {% else %}
+                    <i class="bi bi-check-lg"></i> Complete
+                  {% endif %}
+                </a>
+                <a href="{% url 'todo:todo_update' todo.pk %}" class="btn btn-sm btn-info"><i class="bi bi-pencil"></i> Edit</a>
+                <a href="{% url 'todo:todo_delete' todo.pk %}" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i> Delete</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <i class="bi bi-clipboard-check"></i>
+        <h3>No todos yet!</h3>
+        <p>Create your first todo to get started.</p>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}
