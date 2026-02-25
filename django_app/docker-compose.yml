@@ -1,7 +1,9 @@
 services:
+
+  # ── App ──────────────────────────────────────────────────────────────────────
   django:
-    image: todo-app:django-observability
-    container_name: todo-app
+    image: django-observability:latest
+    container_name: django-app
     build:
       context: .
       dockerfile: Dockerfile
@@ -11,12 +13,44 @@ services:
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/mediafiles
+      - logs_volume:/app/logs
     env_file:
       - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app_network
+      - observability_network
+
+  # ── Database ──────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres-db
+    restart: unless-stopped
     environment:
-      - DB_HOST=host.docker.internal
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      POSTGRES_DB:       ${DB_NAME}
+      POSTGRES_USER:     ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - app_network
+
 volumes:
+  postgres_data:
   static_volume:
   media_volume:
+  logs_volume:
+
+networks:
+  app_network:
+    driver: bridge
+  observability_network:
+    driver: bridge
