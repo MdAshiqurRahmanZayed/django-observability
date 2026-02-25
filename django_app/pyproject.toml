@@ -5,6 +5,7 @@ description = "Django Todo App"
 requires-python = ">=3.12"
 dependencies = [
     "django>=6.0.0",
+    "django-prometheus>=2.4.0",
     "gunicorn>=21.2.0",
     "pre-commit>=4.5.1",
     "psycopg2-binary>=2.9.0",
