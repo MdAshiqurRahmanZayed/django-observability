@@ -1,0 +1,419 @@
+{
+    "uid": "obs-prometheus",
+    "title": "obs-prometheus Overview",
+    "tags": [
+        "prometheus"
+    ],
+    "timezone": "browser",
+    "refresh": "10s",
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "panels": [
+        {
+            "id": 1,
+            "title": "Status",
+            "type": "stat",
+            "gridPos": {
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 4
+            },
+            "options": {
+                "colorMode": "background",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "up{job=\"prometheus\"}"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "mappings": [
+                        {
+                            "type": "value",
+                            "options": {
+                                "0": {
+                                    "text": "DOWN",
+                                    "color": "red"
+                                },
+                                "1": {
+                                    "text": "UP",
+                                    "color": "green"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "id": 2,
+            "title": "Uptime",
+            "type": "stat",
+            "gridPos": {
+                "x": 4,
+                "y": 0,
+                "w": 4,
+                "h": 4
+            },
+            "options": {
+                "colorMode": "value",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "(time() - process_start_time_seconds{job=\"prometheus\"}) / 3600"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "h",
+                    "decimals": 1
+                }
+            }
+        },
+        {
+            "id": 3,
+            "title": "Targets UP",
+            "type": "stat",
+            "gridPos": {
+                "x": 8,
+                "y": 0,
+                "w": 4,
+                "h": 4
+            },
+            "options": {
+                "colorMode": "background",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "count(up == 1)"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "id": 4,
+            "title": "Targets DOWN",
+            "type": "stat",
+            "gridPos": {
+                "x": 12,
+                "y": 0,
+                "w": 4,
+                "h": 4
+            },
+            "options": {
+                "colorMode": "background",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "count(up == 0) or vector(0)"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "red",
+                                "value": 1
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "id": 5,
+            "title": "Memory Usage",
+            "type": "stat",
+            "gridPos": {
+                "x": 16,
+                "y": 0,
+                "w": 4,
+                "h": 4
+            },
+            "options": {
+                "colorMode": "value",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "process_resident_memory_bytes{job=\"prometheus\"}"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "bytes"
+                }
+            }
+        },
+        {
+            "id": 6,
+            "title": "TSDB Size",
+            "type": "stat",
+            "gridPos": {
+                "x": 20,
+                "y": 0,
+                "w": 4,
+                "h": 4
+            },
+            "options": {
+                "colorMode": "value",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "prometheus_tsdb_storage_blocks_bytes"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "bytes"
+                }
+            }
+        },
+        {
+            "id": 7,
+            "title": "All Targets Status",
+            "type": "table",
+            "gridPos": {
+                "x": 0,
+                "y": 4,
+                "w": 24,
+                "h": 10
+            },
+            "options": {
+                "cellHeight": "sm",
+                "footer": {
+                    "show": false
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "up",
+                    "instant": true,
+                    "format": "table"
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "excludeByName": {
+                            "__name__": true,
+                            "Time": true
+                        },
+                        "renameByName": {
+                            "job": "Service",
+                            "instance": "Instance",
+                            "Value": "Status"
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Status"
+                        },
+                        "properties": [
+                            {
+                                "id": "mappings",
+                                "value": [
+                                    {
+                                        "type": "value",
+                                        "options": {
+                                            "0": {
+                                                "text": "DOWN",
+                                                "color": "red"
+                                            },
+                                            "1": {
+                                                "text": "UP",
+                                                "color": "green"
+                                            }
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "id": "custom.displayMode",
+                                "value": "color-background"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": 8,
+            "title": "Scrape Duration per Job",
+            "type": "timeseries",
+            "gridPos": {
+                "x": 0,
+                "y": 14,
+                "w": 12,
+                "h": 8
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "scrape_duration_seconds",
+                    "legendFormat": "{{job}}"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "s"
+                }
+            }
+        },
+        {
+            "id": 9,
+            "title": "Samples Scraped per Job",
+            "type": "timeseries",
+            "gridPos": {
+                "x": 12,
+                "y": 14,
+                "w": 12,
+                "h": 8
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "scrape_samples_scraped",
+                    "legendFormat": "{{job}}"
+                }
+            ]
+        },
+        {
+            "id": 10,
+            "title": "Ingestion Rate",
+            "type": "timeseries",
+            "gridPos": {
+                "x": 0,
+                "y": 22,
+                "w": 12,
+                "h": 8
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "rate(prometheus_tsdb_head_samples_appended_total[1m])",
+                    "legendFormat": "samples/sec"
+                }
+            ]
+        },
+        {
+            "id": 11,
+            "title": "Memory Over Time",
+            "type": "timeseries",
+            "gridPos": {
+                "x": 12,
+                "y": 22,
+                "w": 12,
+                "h": 8
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "process_resident_memory_bytes{job=\"prometheus\"}",
+                    "legendFormat": "RSS"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "bytes"
+                }
+            }
+        }
+    ],
+    "schemaVersion": 38
+}

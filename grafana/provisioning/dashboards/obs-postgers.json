@@ -1,0 +1,254 @@
+{
+    "uid": "obs-postgres",
+    "title": "obs-postgres Overview",
+    "tags": [
+        "postgres",
+        "db"
+    ],
+    "timezone": "browser",
+    "refresh": "10s",
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "panels": [
+        {
+            "id": 1,
+            "title": "DB Status (via Django)",
+            "type": "stat",
+            "gridPos": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 4
+            },
+            "options": {
+                "colorMode": "background",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "django_db_errors_total >= 0",
+                    "legendFormat": "Connected"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "mappings": [
+                        {
+                            "type": "value",
+                            "options": {
+                                "0": {
+                                    "text": "UP",
+                                    "color": "green"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "id": 2,
+            "title": "Total DB Executions",
+            "type": "stat",
+            "gridPos": {
+                "x": 6,
+                "y": 0,
+                "w": 6,
+                "h": 4
+            },
+            "options": {
+                "colorMode": "value",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "sum(django_db_execute_total)"
+                }
+            ]
+        },
+        {
+            "id": 3,
+            "title": "DB Errors Total",
+            "type": "stat",
+            "gridPos": {
+                "x": 12,
+                "y": 0,
+                "w": 6,
+                "h": 4
+            },
+            "options": {
+                "colorMode": "background",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "sum(django_db_errors_total)"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "red",
+                                "value": 1
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "id": 4,
+            "title": "Avg Query Duration",
+            "type": "stat",
+            "gridPos": {
+                "x": 18,
+                "y": 0,
+                "w": 6,
+                "h": 4
+            },
+            "options": {
+                "colorMode": "value",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "rate(django_db_query_duration_seconds_sum[5m]) / rate(django_db_query_duration_seconds_count[5m])"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "s"
+                }
+            }
+        },
+        {
+            "id": 5,
+            "title": "Query Execution Rate",
+            "type": "timeseries",
+            "gridPos": {
+                "x": 0,
+                "y": 4,
+                "w": 12,
+                "h": 8
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "rate(django_db_execute_total[1m])",
+                    "legendFormat": "queries/sec"
+                }
+            ]
+        },
+        {
+            "id": 6,
+            "title": "Query Duration p50/p95/p99",
+            "type": "timeseries",
+            "gridPos": {
+                "x": 12,
+                "y": 4,
+                "w": 12,
+                "h": 8
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "histogram_quantile(0.50, rate(django_db_query_duration_seconds_bucket[5m]))",
+                    "legendFormat": "p50"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "histogram_quantile(0.95, rate(django_db_query_duration_seconds_bucket[5m]))",
+                    "legendFormat": "p95"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "histogram_quantile(0.99, rate(django_db_query_duration_seconds_bucket[5m]))",
+                    "legendFormat": "p99"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "s"
+                }
+            }
+        },
+        {
+            "id": 9,
+            "title": "DB Query Logs",
+            "type": "logs",
+            "gridPos": {
+                "x": 0,
+                "y": 20,
+                "w": 24,
+                "h": 8
+            },
+            "options": {
+                "showTime": true,
+                "wrapLogMessage": true,
+                "sortOrder": "Descending"
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "loki"
+                    },
+                    "expr": "{app=\"django\", logger=\"django.db.backends\"}"
+                }
+            ]
+        }
+    ],
+    "schemaVersion": 38
+}

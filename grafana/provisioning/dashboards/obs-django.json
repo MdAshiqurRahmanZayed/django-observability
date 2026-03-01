@@ -1,0 +1,477 @@
+{
+    "uid": "obs-django",
+    "title": "obs-django Overview",
+    "tags": [
+        "django",
+        "app"
+    ],
+    "timezone": "browser",
+    "refresh": "10s",
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "panels": [
+        {
+            "id": 1,
+            "title": "Status",
+            "type": "stat",
+            "gridPos": {
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 4
+            },
+            "options": {
+                "colorMode": "background",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "up{job=\"django\"}",
+                    "legendFormat": "Status"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "mappings": [
+                        {
+                            "type": "value",
+                            "options": {
+                                "0": {
+                                    "text": "DOWN",
+                                    "color": "red"
+                                },
+                                "1": {
+                                    "text": "UP",
+                                    "color": "green"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "id": 2,
+            "title": "Uptime",
+            "type": "stat",
+            "gridPos": {
+                "x": 4,
+                "y": 0,
+                "w": 4,
+                "h": 4
+            },
+            "options": {
+                "colorMode": "value",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "(time() - process_start_time_seconds{job=\"django\"}) / 3600",
+                    "legendFormat": "Hours"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "h",
+                    "decimals": 1
+                }
+            }
+        },
+        {
+            "id": 3,
+            "title": "Total Requests",
+            "type": "stat",
+            "gridPos": {
+                "x": 8,
+                "y": 0,
+                "w": 4,
+                "h": 4
+            },
+            "options": {
+                "colorMode": "value",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "sum(django_http_requests_total_by_method_total)"
+                }
+            ]
+        },
+        {
+            "id": 4,
+            "title": "Error Rate",
+            "type": "stat",
+            "gridPos": {
+                "x": 12,
+                "y": 0,
+                "w": 4,
+                "h": 4
+            },
+            "options": {
+                "colorMode": "background",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "sum(rate(django_http_responses_total_by_status_total{status=~\"[45]..\"}[5m]))"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "reqps",
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 0.1
+                            },
+                            {
+                                "color": "red",
+                                "value": 1
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "id": 5,
+            "title": "Memory (RSS)",
+            "type": "stat",
+            "gridPos": {
+                "x": 16,
+                "y": 0,
+                "w": 4,
+                "h": 4
+            },
+            "options": {
+                "colorMode": "value",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "process_resident_memory_bytes{job=\"django\"}"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "bytes"
+                }
+            }
+        },
+        {
+            "id": 6,
+            "title": "DB Queries Total",
+            "type": "stat",
+            "gridPos": {
+                "x": 20,
+                "y": 0,
+                "w": 4,
+                "h": 4
+            },
+            "options": {
+                "colorMode": "value",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "sum(django_db_execute_total)"
+                }
+            ]
+        },
+        {
+            "id": 7,
+            "title": "Request Rate by Method",
+            "type": "timeseries",
+            "gridPos": {
+                "x": 0,
+                "y": 4,
+                "w": 12,
+                "h": 8
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "rate(django_http_requests_total_by_method_total{method=\"GET\"}[1m])",
+                    "legendFormat": "GET"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "rate(django_http_requests_total_by_method_total{method=\"POST\"}[1m])",
+                    "legendFormat": "POST"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "rate(django_http_requests_total_by_method_total{method=\"DELETE\"}[1m])",
+                    "legendFormat": "DELETE"
+                }
+            ]
+        },
+        {
+            "id": 8,
+            "title": "Response Time p50/p95/p99",
+            "type": "timeseries",
+            "gridPos": {
+                "x": 12,
+                "y": 4,
+                "w": 12,
+                "h": 8
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "histogram_quantile(0.50, rate(django_http_requests_latency_seconds_by_view_method_bucket[5m]))",
+                    "legendFormat": "p50"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "histogram_quantile(0.95, rate(django_http_requests_latency_seconds_by_view_method_bucket[5m]))",
+                    "legendFormat": "p95"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "histogram_quantile(0.99, rate(django_http_requests_latency_seconds_by_view_method_bucket[5m]))",
+                    "legendFormat": "p99"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "s"
+                }
+            }
+        },
+        {
+            "id": 9,
+            "title": "HTTP Status Codes",
+            "type": "timeseries",
+            "gridPos": {
+                "x": 0,
+                "y": 12,
+                "w": 12,
+                "h": 8
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "rate(django_http_responses_total_by_status_total{status=~\"2..\"}[1m])",
+                    "legendFormat": "2xx"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "rate(django_http_responses_total_by_status_total{status=~\"4..\"}[1m])",
+                    "legendFormat": "4xx"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "rate(django_http_responses_total_by_status_total{status=~\"5..\"}[1m])",
+                    "legendFormat": "5xx"
+                }
+            ]
+        },
+        {
+            "id": 10,
+            "title": "DB Query Rate",
+            "type": "timeseries",
+            "gridPos": {
+                "x": 12,
+                "y": 12,
+                "w": 12,
+                "h": 8
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "rate(django_db_execute_total[1m])",
+                    "legendFormat": "queries/sec"
+                }
+            ]
+        },
+        {
+            "id": 11,
+            "title": "DB Query Duration p95",
+            "type": "timeseries",
+            "gridPos": {
+                "x": 0,
+                "y": 20,
+                "w": 12,
+                "h": 8
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "histogram_quantile(0.95, rate(django_db_query_duration_seconds_bucket[5m]))",
+                    "legendFormat": "p95"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "s"
+                }
+            }
+        },
+        {
+            "id": 12,
+            "title": "Memory Over Time",
+            "type": "timeseries",
+            "gridPos": {
+                "x": 12,
+                "y": 20,
+                "w": 12,
+                "h": 8
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "process_resident_memory_bytes{job=\"django\"}",
+                    "legendFormat": "RSS"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "bytes"
+                }
+            }
+        },
+        {
+            "id": 13,
+            "title": "Live Logs",
+            "type": "logs",
+            "gridPos": {
+                "x": 0,
+                "y": 28,
+                "w": 12,
+                "h": 8
+            },
+            "options": {
+                "showTime": true,
+                "wrapLogMessage": true,
+                "sortOrder": "Descending"
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "loki"
+                    },
+                    "expr": "{app=\"django\"}"
+                }
+            ]
+        },
+        {
+            "id": 14,
+            "title": "Error Logs",
+            "type": "logs",
+            "gridPos": {
+                "x": 12,
+                "y": 28,
+                "w": 12,
+                "h": 8
+            },
+            "options": {
+                "showTime": true,
+                "wrapLogMessage": true,
+                "sortOrder": "Descending"
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "loki"
+                    },
+                    "expr": "{app=\"django\", level=\"ERROR\"}"
+                }
+            ]
+        }
+    ],
+    "schemaVersion": 38
+}

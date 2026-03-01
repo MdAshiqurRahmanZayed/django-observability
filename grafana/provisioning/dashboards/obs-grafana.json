@@ -1,0 +1,220 @@
+{
+    "uid": "obs-grafana",
+    "title": "obs-grafana Overview",
+    "tags": [
+        "grafana"
+    ],
+    "timezone": "browser",
+    "refresh": "10s",
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "panels": [
+        {
+            "id": 1,
+            "title": "Status",
+            "type": "stat",
+            "gridPos": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 4
+            },
+            "options": {
+                "colorMode": "background",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "grafana_build_info",
+                    "legendFormat": "Status"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "mappings": [
+                        {
+                            "type": "value",
+                            "options": {
+                                "1": {
+                                    "text": "UP",
+                                    "color": "green"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "id": 2,
+            "title": "Active Users",
+            "type": "stat",
+            "gridPos": {
+                "x": 6,
+                "y": 0,
+                "w": 6,
+                "h": 4
+            },
+            "options": {
+                "colorMode": "value",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "grafana_stat_totals_users",
+                    "legendFormat": "Users"
+                }
+            ]
+        },
+        {
+            "id": 3,
+            "title": "Total Dashboards",
+            "type": "stat",
+            "gridPos": {
+                "x": 12,
+                "y": 0,
+                "w": 6,
+                "h": 4
+            },
+            "options": {
+                "colorMode": "value",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "grafana_stat_totals_dashboard",
+                    "legendFormat": "Dashboards"
+                }
+            ]
+        },
+        {
+            "id": 4,
+            "title": "Datasources",
+            "type": "stat",
+            "gridPos": {
+                "x": 18,
+                "y": 0,
+                "w": 6,
+                "h": 4
+            },
+            "options": {
+                "colorMode": "value",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "grafana_stat_totals_datasource",
+                    "legendFormat": "Datasources"
+                }
+            ]
+        },
+        {
+            "id": 5,
+            "title": "HTTP Request Rate",
+            "type": "timeseries",
+            "gridPos": {
+                "x": 0,
+                "y": 4,
+                "w": 24,
+                "h": 12
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "rate(grafana_http_request_duration_seconds_count[1m])",
+                    "legendFormat": "{{handler}} {{method}}"
+                }
+            ]
+        },
+        {
+            "id": 6,
+            "title": "HTTP Response Duration p95",
+            "type": "timeseries",
+            "gridPos": {
+                "x": 0,
+                "y": 4,
+                "w": 24,
+                "h": 12
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "histogram_quantile(0.95, rate(grafana_http_request_duration_seconds_bucket[5m]))",
+                    "legendFormat": "p95 {{handler}}"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "s"
+                }
+            }
+        },
+        {
+            "id": 7,
+            "title": "Memory Usage",
+            "type": "timeseries",
+            "gridPos": {
+                "x": 0,
+                "y": 12,
+                "w": 12,
+                "h": 8
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "process_resident_memory_bytes{job=\"grafana\"}",
+                    "legendFormat": "RSS"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "bytes"
+                }
+            }
+        }
+    ],
+    "schemaVersion": 38
+}

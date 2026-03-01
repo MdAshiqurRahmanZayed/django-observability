@@ -1,6 +1,6 @@
 services:
 
-  django:
+  obs-django:
     image: django-observability:latest
     container_name: obs-django
     build:
@@ -16,13 +16,13 @@ services:
     env_file:
       - .env
     depends_on:
-      postgres:
+      obs-postgres:
         condition: service_healthy
     networks:
       - app_network
       - observability_network
 
-  postgres:
+  obs-postgres:
     image: postgres:16-alpine
     container_name: obs-postgres
     restart: unless-stopped
@@ -41,7 +41,7 @@ services:
     networks:
       - app_network
 
-  nginx:
+  obs-nginx:
     image: nginx:alpine
     container_name: obs-nginx
     restart: unless-stopped
@@ -52,11 +52,11 @@ services:
       - static_volume:/app/staticfiles:ro
       - media_volume:/app/mediafiles:ro
     depends_on:
-      - django
+      - obs-django
     networks:
       - app_network
 
-  prometheus:
+  obs-prometheus:
     image: prom/prometheus:latest
     container_name: obs-prometheus
     restart: unless-stopped
@@ -73,7 +73,7 @@ services:
     networks:
       - observability_network
 
-  loki:
+  obs-loki:
     image: grafana/loki:2.9.0
     container_name: obs-loki
     restart: unless-stopped
@@ -86,7 +86,7 @@ services:
     networks:
       - observability_network
 
-  promtail:
+  obs-promtail:
     image: grafana/promtail:2.9.0
     container_name: obs-promtail
     restart: unless-stopped
@@ -95,11 +95,11 @@ services:
       - logs_volume:/var/log/django:ro
     command: -config.file=/etc/promtail/config.yml
     depends_on:
-      - loki
+      - obs-loki
     networks:
       - observability_network
 
-  grafana:
+  obs-grafana:
     image: grafana/grafana:latest
     container_name: obs-grafana
     restart: unless-stopped
@@ -113,12 +113,12 @@ services:
       - ./../grafana/provisioning:/etc/grafana/provisioning:ro
       - grafana_data:/var/lib/grafana
     depends_on:
-      - prometheus
-      - loki
+      - obs-prometheus
+      - obs-loki
     networks:
       - observability_network
 
-  node-exporter:
+  obs-node-exporter:
     image: prom/node-exporter:latest
     container_name: obs-node-exporter
     restart: unless-stopped
