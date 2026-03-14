@@ -1,0 +1,205 @@
+groups:
+
+  # ─── DB Alerts ───────────────────────────────────────────────
+  - name: db_alerts
+    rules:
+
+      - alert: DBHighErrorRate
+        expr: rate(django_db_errors_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+          category: db
+        annotations:
+          summary: "High DB error rate"
+          description: "DB errors > 0.1/s for 2 minutes. Current: {{ $value | printf \"%.2f\" }}/s"
+
+      - alert: DBSlowQueries
+        expr: histogram_quantile(0.95, rate(django_db_query_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          category: db
+        annotations:
+          summary: "Slow DB queries detected"
+          description: "95th percentile DB query duration > 1s. Current: {{ $value | printf \"%.2f\" }}s"
+
+      - alert: DBHighQueryRate
+        expr: rate(django_db_execute_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          category: db
+        annotations:
+          summary: "High DB query rate"
+          description: "DB queries > 100/s for 5 minutes. Current: {{ $value | printf \"%.0f\" }}/s"
+
+  # ─── HTTP / URL Alerts ───────────────────────────────────────
+  - name: http_alerts
+    rules:
+
+      - alert: DjangoDown
+        expr: up{job="django"} == 0
+        for: 10s
+        labels:
+          severity: critical
+          category: http
+        annotations:
+          summary: "Django is DOWN"
+          description: "Django app has been unreachable for more than 10 seconds"
+
+      - alert: Django5xxError
+        expr: sum(increase(django_http_responses_total_by_status_total{status=~"5.."}[1m])) > 0
+        for: 0m
+        labels:
+          severity: critical
+          category: http
+        annotations:
+          summary: "Django 5xx server error"
+          description: "A server error (5xx) was detected. Count in last 1m: {{ $value | printf \"%.0f\" }}"
+
+      - alert: Django4xxError
+        expr: sum(increase(django_http_responses_total_by_status_total{status=~"4.."}[1m])) > 0
+        for: 0m
+        labels:
+          severity: warning
+          category: http
+        annotations:
+          summary: "Django 4xx client error"
+          description: "A client error (4xx) was detected. Count in last 1m: {{ $value | printf \"%.0f\" }}"
+
+      - alert: HighHTTP5xxRate
+        expr: sum(rate(django_http_responses_total_by_status_total{status=~"5.."}[5m])) > 0.5
+        for: 2m
+        labels:
+          severity: critical
+          category: http
+        annotations:
+          summary: "High 5xx error rate"
+          description: "5xx errors > 0.5/s for 2 minutes. Current: {{ $value | printf \"%.2f\" }}/s"
+
+      - alert: HighHTTP4xxRate
+        expr: sum(rate(django_http_responses_total_by_status_total{status=~"4.."}[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          category: http
+        annotations:
+          summary: "High 4xx error rate"
+          description: "4xx errors > 2/s for 5 minutes. Current: {{ $value | printf \"%.2f\" }}/s"
+
+      - alert: EndpointHighErrorRate
+        expr: |
+          sum by (view) (
+            rate(django_http_responses_total_by_status_view_method_total{status=~"[45].."}[5m])
+          ) > 0.3
+        for: 3m
+        labels:
+          severity: warning
+          category: http
+        annotations:
+          summary: "High error rate on endpoint {{ $labels.view }}"
+          description: "Endpoint {{ $labels.view }} has error rate > 0.3/s. Current: {{ $value | printf \"%.2f\" }}/s"
+
+  # ─── Latency Alerts ──────────────────────────────────────────
+  - name: latency_alerts
+    rules:
+
+      - alert: HighP95Latency
+        expr: histogram_quantile(0.95, rate(django_http_requests_latency_seconds_by_view_method_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          category: latency
+        annotations:
+          summary: "High p95 response latency"
+          description: "p95 latency > 2s for 5 minutes. Current: {{ $value | printf \"%.2f\" }}s"
+
+      - alert: HighP99Latency
+        expr: histogram_quantile(0.99, rate(django_http_requests_latency_seconds_by_view_method_bucket[5m])) > 5
+        for: 3m
+        labels:
+          severity: critical
+          category: latency
+        annotations:
+          summary: "Critical p99 response latency"
+          description: "p99 latency > 5s for 3 minutes. Current: {{ $value | printf \"%.2f\" }}s"
+
+      - alert: EndpointSlowResponse
+        expr: |
+          histogram_quantile(0.95,
+            sum by (view, le) (
+              rate(django_http_requests_latency_seconds_by_view_method_bucket[5m])
+            )
+          ) > 3
+        for: 5m
+        labels:
+          severity: warning
+          category: latency
+        annotations:
+          summary: "Slow endpoint: {{ $labels.view }}"
+          description: "Endpoint {{ $labels.view }} p95 > 3s. Current: {{ $value | printf \"%.2f\" }}s"
+
+  # ─── Infrastructure Alerts ───────────────────────────────────
+  - name: infra_alerts
+    rules:
+
+      - alert: HighCPUUsage
+        expr: 100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+          category: infrastructure
+        annotations:
+          summary: "High CPU usage"
+          description: "Host CPU usage > 85% for 5 minutes. Current: {{ $value | printf \"%.1f\" }}%"
+
+      - alert: CriticalCPUUsage
+        expr: 100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
+        for: 2m
+        labels:
+          severity: critical
+          category: infrastructure
+        annotations:
+          summary: "Critical CPU usage"
+          description: "Host CPU usage > 95% for 2 minutes. Current: {{ $value | printf \"%.1f\" }}%"
+
+      - alert: HighMemoryUsage
+        expr: 100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 85
+        for: 5m
+        labels:
+          severity: warning
+          category: infrastructure
+        annotations:
+          summary: "High memory usage"
+          description: "Host memory usage > 85% for 5 minutes. Current: {{ $value | printf \"%.1f\" }}%"
+
+      - alert: CriticalMemoryUsage
+        expr: 100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 95
+        for: 2m
+        labels:
+          severity: critical
+          category: infrastructure
+        annotations:
+          summary: "Critical memory usage"
+          description: "Host memory usage > 95% for 2 minutes. Current: {{ $value | printf \"%.1f\" }}%"
+
+      - alert: HighDiskUsage
+        expr: 100 - (node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay"} * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+          category: infrastructure
+        annotations:
+          summary: "High disk usage"
+          description: "Disk usage > 85%. Current: {{ $value | printf \"%.1f\" }}%"
+
+      - alert: DjangoHighMemory
+        expr: process_resident_memory_bytes{job="django"} > 500 * 1024 * 1024
+        for: 5m
+        labels:
+          severity: warning
+          category: infrastructure
+        annotations:
+          summary: "Django using high memory"
+          description: "Django RSS memory > 500MB for 5 minutes. Current: {{ $value | humanize1024 }}B"
