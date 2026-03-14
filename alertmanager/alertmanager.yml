@@ -16,7 +16,7 @@ route:
         alertname: DjangoDown
         category: http
       receiver: "slack-http"
-      repeat_interval: 1m
+      repeat_interval: 10m
     - match:
         alertname: Django5xxError
         category: http
@@ -48,6 +48,7 @@ receivers:
         icon_emoji: ":bell:"
         color: '{{ if eq .Status "firing" }}{{ if eq (index .Alerts 0).Labels.severity "critical" }}#FF0000{{ else }}#FFA500{{ end }}{{ else }}#36A64F{{ end }}'
         title: '{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} [{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}'
+        title_link: 'http://localhost:3000/alerting/Prometheus/{{ .GroupLabels.alertname }}/find'
         text: |
           {{ range .Alerts }}
           {{ if eq .Labels.severity "critical" }}🚨 *CRITICAL*{{ else if eq .Labels.severity "warning" }}⚠️ *WARNING*{{ else }}ℹ️ *INFO*{{ end }} — {{ .Annotations.summary }}
@@ -66,6 +67,7 @@ receivers:
         icon_emoji: ":floppy_disk:"
         color: '{{ if eq .Status "firing" }}{{ if eq (index .Alerts 0).Labels.severity "critical" }}#FF0000{{ else }}#FFA500{{ end }}{{ else }}#36A64F{{ end }}'
         title: '{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} [{{ .Status | toUpper }}] 🗄️ DB — {{ .GroupLabels.alertname }}'
+        title_link: 'http://localhost:3000/alerting/Prometheus/{{ .GroupLabels.alertname }}/find'
         text: |
           {{ range .Alerts }}
           {{ if eq .Labels.severity "critical" }}🚨 *CRITICAL*{{ else }}⚠️ *WARNING*{{ end }} — {{ .Annotations.summary }}
@@ -77,6 +79,25 @@ receivers:
           {{ end }}
         send_resolved: true
 
+  - name: "slack-http-firing-only"
+    slack_configs:
+      - channel: "#alerts-http"
+        username: "Observability Bot"
+        icon_emoji: ":globe_with_meridians:"
+        color: '{{ if eq .Status "firing" }}{{ if eq (index .Alerts 0).Labels.severity "critical" }}#FF0000{{ else }}#FFA500{{ end }}{{ else }}#36A64F{{ end }}'
+        title: '{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} [{{ .Status | toUpper }}] 🌐 HTTP — {{ .GroupLabels.alertname }}'
+        title_link: 'http://localhost:3000/alerting/Prometheus/{{ .GroupLabels.alertname }}/find'
+        text: |
+          {{ range .Alerts }}
+          {{ if eq .Labels.severity "critical" }}🚨 *CRITICAL*{{ else }}⚠️ *WARNING*{{ end }} — {{ .Annotations.summary }}
+
+          📋 *Reason:* {{ .Annotations.description }}
+          🏷️ *Alert:* `{{ .Labels.alertname }}`
+          🔖 *Category:* `http`
+          🕐 *Started:* {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
+          {{ end }}
+        send_resolved: false
+
   - name: "slack-http"
     slack_configs:
       - channel: "#alerts-http"
@@ -84,6 +105,7 @@ receivers:
         icon_emoji: ":globe_with_meridians:"
         color: '{{ if eq .Status "firing" }}{{ if eq (index .Alerts 0).Labels.severity "critical" }}#FF0000{{ else }}#FFA500{{ end }}{{ else }}#36A64F{{ end }}'
         title: '{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} [{{ .Status | toUpper }}] 🌐 HTTP — {{ .GroupLabels.alertname }}'
+        title_link: 'http://localhost:3000/alerting/Prometheus/{{ .GroupLabels.alertname }}/find'
         text: |
           {{ range .Alerts }}
           {{ if eq .Labels.severity "critical" }}🚨 *CRITICAL*{{ else }}⚠️ *WARNING*{{ end }} — {{ .Annotations.summary }}
@@ -102,6 +124,7 @@ receivers:
         icon_emoji: ":stopwatch:"
         color: '{{ if eq .Status "firing" }}{{ if eq (index .Alerts 0).Labels.severity "critical" }}#FF0000{{ else }}#FFA500{{ end }}{{ else }}#36A64F{{ end }}'
         title: '{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} [{{ .Status | toUpper }}] ⏱️ Latency — {{ .GroupLabels.alertname }}'
+        title_link: 'http://localhost:3000/alerting/Prometheus/{{ .GroupLabels.alertname }}/find'
         text: |
           {{ range .Alerts }}
           {{ if eq .Labels.severity "critical" }}🚨 *CRITICAL*{{ else }}⚠️ *WARNING*{{ end }} — {{ .Annotations.summary }}
@@ -120,6 +143,7 @@ receivers:
         icon_emoji: ":desktop_computer:"
         color: '{{ if eq .Status "firing" }}{{ if eq (index .Alerts 0).Labels.severity "critical" }}#FF0000{{ else }}#FFA500{{ end }}{{ else }}#36A64F{{ end }}'
         title: '{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} [{{ .Status | toUpper }}] 🖥️ Infra — {{ .GroupLabels.alertname }}'
+        title_link: 'http://localhost:3000/alerting/Prometheus/{{ .GroupLabels.alertname }}/find'
         text: |
           {{ range .Alerts }}
           {{ if eq .Labels.severity "critical" }}🚨 *CRITICAL*{{ else }}⚠️ *WARNING*{{ end }} — {{ .Annotations.summary }}

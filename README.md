@@ -110,9 +110,9 @@ Alerts are routed to dedicated Slack channels by category:
 ### Test alerts via curl
 
 ```bash
-# Test DjangoDown (stop container, fires in 10s)
+# Test DjangoDown (firing-only: no resolved message)
 docker stop obs-django
-docker start obs-django   # sends ✅ RESOLVED
+docker start obs-django
 
 # Test HTTP alert manually
 curl -X POST http://localhost:9093/api/v2/alerts \
