@@ -1,0 +1,139 @@
+global:
+  resolve_timeout: 5m
+  slack_api_url: "SLACK_WEBHOOK_URL_PLACEHOLDER"
+
+route:
+  group_by: ["alertname", "category"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 12h
+  receiver: "slack-default"
+  routes:
+    - match:
+        category: db
+      receiver: "slack-db"
+    - match:
+        alertname: DjangoDown
+        category: http
+      receiver: "slack-http"
+      repeat_interval: 1m
+    - match:
+        alertname: Django5xxError
+        category: http
+      receiver: "slack-http"
+      group_wait: 10s
+      repeat_interval: 5m
+    - match:
+        alertname: Django4xxError
+        category: http
+      receiver: "slack-http"
+      group_wait: 10s
+      repeat_interval: 5m
+    - match:
+        category: http
+      receiver: "slack-http"
+    - match:
+        category: latency
+      receiver: "slack-latency"
+    - match:
+        category: infrastructure
+      receiver: "slack-infra"
+
+receivers:
+
+  - name: "slack-default"
+    slack_configs:
+      - channel: "#alerts"
+        username: "Observability Bot"
+        icon_emoji: ":bell:"
+        color: '{{ if eq .Status "firing" }}{{ if eq (index .Alerts 0).Labels.severity "critical" }}#FF0000{{ else }}#FFA500{{ end }}{{ else }}#36A64F{{ end }}'
+        title: '{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} [{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          {{ if eq .Labels.severity "critical" }}🚨 *CRITICAL*{{ else if eq .Labels.severity "warning" }}⚠️ *WARNING*{{ else }}ℹ️ *INFO*{{ end }} — {{ .Annotations.summary }}
+
+          📋 *Reason:* {{ .Annotations.description }}
+          🏷️ *Alert:* `{{ .Labels.alertname }}`
+          🔖 *Category:* `{{ .Labels.category }}`
+          🕐 *Started:* {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
+          {{ end }}
+        send_resolved: true
+
+  - name: "slack-db"
+    slack_configs:
+      - channel: "#alerts-db"
+        username: "Observability Bot"
+        icon_emoji: ":floppy_disk:"
+        color: '{{ if eq .Status "firing" }}{{ if eq (index .Alerts 0).Labels.severity "critical" }}#FF0000{{ else }}#FFA500{{ end }}{{ else }}#36A64F{{ end }}'
+        title: '{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} [{{ .Status | toUpper }}] 🗄️ DB — {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          {{ if eq .Labels.severity "critical" }}🚨 *CRITICAL*{{ else }}⚠️ *WARNING*{{ end }} — {{ .Annotations.summary }}
+
+          📋 *Reason:* {{ .Annotations.description }}
+          🏷️ *Alert:* `{{ .Labels.alertname }}`
+          🔖 *Category:* `database`
+          🕐 *Started:* {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
+          {{ end }}
+        send_resolved: true
+
+  - name: "slack-http"
+    slack_configs:
+      - channel: "#alerts-http"
+        username: "Observability Bot"
+        icon_emoji: ":globe_with_meridians:"
+        color: '{{ if eq .Status "firing" }}{{ if eq (index .Alerts 0).Labels.severity "critical" }}#FF0000{{ else }}#FFA500{{ end }}{{ else }}#36A64F{{ end }}'
+        title: '{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} [{{ .Status | toUpper }}] 🌐 HTTP — {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          {{ if eq .Labels.severity "critical" }}🚨 *CRITICAL*{{ else }}⚠️ *WARNING*{{ end }} — {{ .Annotations.summary }}
+
+          📋 *Reason:* {{ .Annotations.description }}
+          🏷️ *Alert:* `{{ .Labels.alertname }}`
+          🔖 *Category:* `http`
+          🕐 *Started:* {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
+          {{ end }}
+        send_resolved: true
+
+  - name: "slack-latency"
+    slack_configs:
+      - channel: "#alerts-latency"
+        username: "Observability Bot"
+        icon_emoji: ":stopwatch:"
+        color: '{{ if eq .Status "firing" }}{{ if eq (index .Alerts 0).Labels.severity "critical" }}#FF0000{{ else }}#FFA500{{ end }}{{ else }}#36A64F{{ end }}'
+        title: '{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} [{{ .Status | toUpper }}] ⏱️ Latency — {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          {{ if eq .Labels.severity "critical" }}🚨 *CRITICAL*{{ else }}⚠️ *WARNING*{{ end }} — {{ .Annotations.summary }}
+
+          📋 *Reason:* {{ .Annotations.description }}
+          🏷️ *Alert:* `{{ .Labels.alertname }}`
+          🔖 *Category:* `latency`
+          🕐 *Started:* {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
+          {{ end }}
+        send_resolved: true
+
+  - name: "slack-infra"
+    slack_configs:
+      - channel: "#alerts-infra"
+        username: "Observability Bot"
+        icon_emoji: ":desktop_computer:"
+        color: '{{ if eq .Status "firing" }}{{ if eq (index .Alerts 0).Labels.severity "critical" }}#FF0000{{ else }}#FFA500{{ end }}{{ else }}#36A64F{{ end }}'
+        title: '{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} [{{ .Status | toUpper }}] 🖥️ Infra — {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          {{ if eq .Labels.severity "critical" }}🚨 *CRITICAL*{{ else }}⚠️ *WARNING*{{ end }} — {{ .Annotations.summary }}
+
+          📋 *Reason:* {{ .Annotations.description }}
+          🏷️ *Alert:* `{{ .Labels.alertname }}`
+          🔖 *Category:* `infrastructure`
+          🕐 *Started:* {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
+          {{ end }}
+        send_resolved: true
+
+inhibit_rules:
+  - source_match:
+      severity: "critical"
+    target_match:
+      severity: "warning"
+    equal: ["alertname"]

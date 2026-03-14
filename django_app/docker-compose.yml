@@ -64,12 +64,30 @@ services:
       - "9090:9090"
     volumes:
       - ./../prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./../prometheus/rules:/etc/prometheus/rules:ro
       - prometheus_data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
       - "--storage.tsdb.retention.time=15d"
       - "--web.enable-lifecycle"
+    networks:
+      - observability_network
+
+  obs-alertmanager:
+    image: prom/alertmanager:latest
+    container_name: obs-alertmanager
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./../alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml.tmpl:ro
+      - alertmanager_data:/alertmanager
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - "sed 's|SLACK_WEBHOOK_URL_PLACEHOLDER|'$$SLACK_WEBHOOK_URL'|g' /etc/alertmanager/alertmanager.yml.tmpl > /tmp/alertmanager.yml && /bin/alertmanager --config.file=/tmp/alertmanager.yml --storage.path=/alertmanager"
+    environment:
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
     networks:
       - observability_network
 
@@ -141,6 +159,7 @@ volumes:
   media_volume:
   logs_volume:
   prometheus_data:
+  alertmanager_data:
   loki_data:
   grafana_data:
 

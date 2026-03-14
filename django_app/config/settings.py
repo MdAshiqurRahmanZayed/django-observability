@@ -1,5 +1,7 @@
+import os
 from pathlib import Path
 
+import sentry_sdk
 from decouple import Csv, config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -134,3 +136,12 @@ LOGGING = {
         },
     },
 }
+
+
+sentry_sdk.init(
+    dsn=os.environ.get("SENTRY_DSN", ""),
+    traces_sample_rate=1.0,
+    profiles_sample_rate=1.0,
+    send_default_pii=True,
+    environment=os.environ.get("DJANGO_ENV", "development"),
+)
