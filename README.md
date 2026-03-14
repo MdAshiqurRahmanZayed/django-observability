@@ -207,3 +207,11 @@ docker compose logs obs-promtail --tail=10
 - [x] Node Exporter (host metrics)
 - [x] Alertmanager + Slack notifications
 - [x] Sentry error tracking
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Grafana Django Overview](screenshots/a.png) | ![Grafana Infrastructure](screenshots/b.png) |
+| ![Prometheus Alerts](screenshots/c.png) | ![Alertmanager](screenshots/d.png) |
+| ![Slack Notifications](screenshots/e.png) | ![Sentry Errors](screenshots/f.png) |
