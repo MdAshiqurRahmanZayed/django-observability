@@ -212,6 +212,7 @@ docker compose logs obs-promtail --tail=10
 
 | | |
 |---|---|
-| ![Grafana Django Overview](screenshots/a.png) | ![Grafana Infrastructure](screenshots/b.png) |
-| ![Prometheus Alerts](screenshots/c.png) | ![Alertmanager](screenshots/d.png) |
-| ![Slack Notifications](screenshots/e.png) | ![Sentry Errors](screenshots/f.png) |
+| ![Django Todo](screenshots/a.png) | ![Grafana Dashboard](screenshots/b.png) |
+| ![Django Project Overview](screenshots/c.png) | ![DB Logs](screenshots/d.png) |
+| ![NGINX Overview](screenshots/e.png) | ![Alert Manager list](screenshots/f.png) |
+| ![Alert Manager Dashboard](screenshots/g.png) | ![Slack Notification](screenshots/h.png) |
