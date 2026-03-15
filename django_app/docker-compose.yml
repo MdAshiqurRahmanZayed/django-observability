@@ -7,8 +7,8 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: on-failure
-    expose:
-      - "9000"
+    ports:
+      - "9000:9000"
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/mediafiles
@@ -26,6 +26,8 @@ services:
     image: postgres:16-alpine
     container_name: obs-postgres
     restart: unless-stopped
+    ports:
+      - "5439:5432"
     environment:
       POSTGRES_DB:       ${DB_NAME}
       POSTGRES_USER:     ${DB_USER}
@@ -141,6 +143,8 @@ services:
     container_name: obs-node-exporter
     restart: unless-stopped
     pid: host
+    ports:
+      - "9100:9100"
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -153,6 +157,24 @@ services:
     networks:
       - observability_network
 
+  obs-pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: obs-pgadmin
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    env_file:
+      - .env
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - obs-postgres
+    networks:
+      - app_network
+
 volumes:
   postgres_data:
   static_volume:
@@ -162,6 +184,7 @@ volumes:
   alertmanager_data:
   loki_data:
   grafana_data:
+  pgadmin_data:
 
 networks:
   app_network:
