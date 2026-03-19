@@ -5,8 +5,31 @@ from .models import Todo
 
 
 def todo_list(request):
-    todos = Todo.objects.all()
-    return render(request, "todo/todo_list.html", {"todos": todos})
+    tab = request.GET.get("tab", "pending")
+
+    if tab == "done":
+        todos = Todo.objects.filter(completed=True)
+    elif tab == "pending":
+        todos = Todo.objects.filter(completed=False)
+    else:
+        tab = "all"
+        todos = Todo.objects.all()
+
+    counts = {
+        "all": Todo.objects.count(),
+        "done": Todo.objects.filter(completed=True).count(),
+        "pending": Todo.objects.filter(completed=False).count(),
+    }
+
+    return render(
+        request,
+        "todo/todo_list.html",
+        {
+            "todos": todos,
+            "tab": tab,
+            "counts": counts,
+        },
+    )
 
 
 def todo_create(request):
@@ -44,4 +67,5 @@ def todo_toggle(request, pk):
     todo = get_object_or_404(Todo, pk=pk)
     todo.completed = not todo.completed
     todo.save()
-    return redirect("todo:todo_list")
+    tab = request.GET.get("tab", "pending")
+    return redirect(f"/?tab={tab}")

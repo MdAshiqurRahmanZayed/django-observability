@@ -3,7 +3,6 @@
 .gitignore
 .gitattributes
 
-
 # CI
 .codeclimate.yml
 .travis.yml
@@ -15,11 +14,9 @@ Dockerfile
 .docker
 .dockerignore
 
-# Byte-compiled / optimized / DLL files
+# Python bytecode
 **/__pycache__/
 **/*.py[cod]
-
-# C extensions
 *.so
 
 # Distribution / packaging
@@ -38,18 +35,10 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
-
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
+# Test / coverage
 htmlcov/
 .tox/
 .coverage
@@ -61,29 +50,29 @@ coverage.xml
 *.mo
 *.pot
 
-# Django stuff:
+# Django
 *.log
 
-# Sphinx documentation
-docs/_build/
+# Static — collectstatic output is generated at container startup, not baked in.
+# site_static/ is intentionally included — it's live-mounted but also needed
+# inside the container for collectstatic source resolution.
+static/
+staticfiles/
 
-# PyBuilder
-target/
+# Media uploads
+media/
 
 # Virtual environment
 .env
 .venv/
 venv/
 
-# PyCharm
-.idea
-
-# Python mode for VIM
-.ropeproject
-**/.ropeproject
-
-# Vim swap files
+# IDE
+.idea/
+.ropeproject/
+**/.ropeproject/
 **/*.swp
-
-# VS Code
 .vscode/
+
+# macOS
+.DS_Store

@@ -78,8 +78,23 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = "static/"
+# ── Static files ──────────────────────────────────────────────────────────────
+
+# URL for collectstatic output — used by admin panel and {% static %} tag
+STATIC_URL = "/static/"
+
+# collectstatic writes here — admin CSS/JS, gitignored, served by Nginx
 STATIC_ROOT = BASE_DIR / "static"
+
+# Source dirs for collectstatic (site_static is also the live source for main site)
+STATICFILES_DIRS = [
+    BASE_DIR / "site_static",
+]
+
+# Direct URL for main site — Nginx serves site_static/ at this prefix,
+# bypassing collectstatic entirely so edits are reflected immediately
+SITE_STATIC_URL = "/site-static/"
+
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
@@ -99,7 +114,6 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "json",
         },
-        # django.log → Promtail watches this → ships to Loki
         "file": {
             "class": "logging.handlers.RotatingFileHandler",
             "filename": "/app/logs/django.log",
@@ -110,25 +124,21 @@ LOGGING = {
     },
     "root": {"handlers": ["console", "file"], "level": "INFO"},
     "loggers": {
-        # general django logs
         "django": {
             "handlers": ["console", "file"],
             "level": "INFO",
             "propagate": False,
         },
-        # every HTTP request/response log
         "django.request": {
             "handlers": ["console", "file"],
             "level": "DEBUG",
             "propagate": False,
         },
-        # every SQL query + duration
         "django.db.backends": {
             "handlers": ["console", "file"],
             "level": "DEBUG",
             "propagate": False,
         },
-        # your app logs
         "todo": {
             "handlers": ["console", "file"],
             "level": "DEBUG",
@@ -136,7 +146,6 @@ LOGGING = {
         },
     },
 }
-
 
 sentry_sdk.init(
     dsn=os.environ.get("SENTRY_DSN", ""),
