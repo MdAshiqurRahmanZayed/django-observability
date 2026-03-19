@@ -29,8 +29,8 @@ from psycopg2.extras import RealDictCursor
 BASE_PATH = Path(__file__).resolve().parent
 
 
-# Read .env from django_app
 def _load_env() -> dict:
+    """Read .env from django_app — all credentials must be defined there."""
     env = {}
     env_file = BASE_PATH / "django_app" / ".env"
     if env_file.exists():
@@ -40,6 +40,16 @@ def _load_env() -> dict:
                 k, _, v = line.partition("=")
                 env[k.strip()] = v.strip()
     return env
+
+
+def _require(env: dict, key: str) -> str:
+    """Return env value or raise — no hardcoded credential fallbacks."""
+    value = env.get(key)
+    if not value:
+        raise RuntimeError(
+            f"Missing required environment variable '{key}' in django_app/.env"
+        )
+    return value
 
 
 ENV = _load_env()
