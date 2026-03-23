@@ -58,8 +58,8 @@ DB_CONFIG = {
     "dbname": ENV.get("DB_NAME", "todo_db"),
     "user": _require(ENV, "DB_USER"),
     "password": _require(ENV, "DB_PASSWORD"),
-    "host": ENV.get("DB_HOST", "localhost"),
-    "port": int(ENV.get("DB_PORT", 5439)),
+    "host": "localhost",  # MCP server runs on host, not in Docker
+    "port": 5439,  # External port mapping from Docker
 }
 
 PROMETHEUS_URL = "http://localhost:9090"
