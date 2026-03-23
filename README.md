@@ -210,30 +210,38 @@ docker compose logs obs-promtail --tail=10
 
 ## Screenshots
 
-### Todo Application
+### Main Todo App
 
-| Todo App | Latest Todos |
-|----------|--------------|
-| ![Todo App](screenshots/todo-app.png) | ![Get Latest Todos](screenshots/get-latest-todos.png) |
+| Main Todos |
+|------------|
+| ![Main Todos](screenshots/main/main-todos.png) |
+
+### MCP Server
+
+| Get Latest Todos | Server Status |
+|------------------|---------------|
+| ![Get Latest Todos](screenshots/mcp/get-latest-todos.png) | ![Server Status](screenshots/mcp/server-status.png) |
 
 ### Grafana Dashboards
 
 | Django Overview | Grafana Overview |
 |-----------------|------------------|
-| ![Django Overview](screenshots/django-overview.png) | ![Grafana Overview](screenshots/grafana-overview.png) |
+| ![Django Overview](screenshots/grafana/django-overview.png) | ![Grafana Overview](screenshots/grafana/grafana-overview.png) |
 
 | Grafana Dashboard | Infrastructure Overview |
 |-------------------|------------------------|
-| ![Grafana Dashboard](screenshots/grafana-dashaboard.png) | ![Infrastructure Overview](screenshots/infra-overview.png) |
+| ![Grafana Dashboard](screenshots/grafana/grafana-dashaboard.png) | ![Infrastructure Overview](screenshots/grafana/infra-overview.png) |
 
 | Loki Overview | Nginx Overview |
 |---------------|----------------|
-| ![Loki Overview](screenshots/loki-overview.png) | ![Nginx Overview](screenshots/nginx-overview.png) |
+| ![Loki Overview](screenshots/grafana/loki-overview.png) | ![Nginx Overview](screenshots/grafana/nginx-overview.png) |
 
-| Prometheus Overview | Server Status |
-|---------------------|---------------|
-| ![Prometheus Overview](screenshots/prometheus-overview.png) | ![Server Status](screenshots/server-status.png) |
+### Prometheus
 
-| Todos Dashboard |
-|-----------------|
-| ![Todos](screenshots/todos.png) |
+| Prometheus Overview | Alert Rules |
+|---------------------|--------------|
+| ![Prometheus Overview](screenshots/prometheus/prometheus-overview.png) | ![Alert Rules](screenshots/prometheus/prometheus-alert.png) |
+
+| Alert Manager | Targets Health |
+|----------------|----------------|
+| ![Alert Manager](screenshots/prometheus/prometheus-alert-manager.png) | ![Targets Health](screenshots/prometheus/prometheus-status-health.png) |
