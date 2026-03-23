@@ -210,9 +210,30 @@ docker compose logs obs-promtail --tail=10
 
 ## Screenshots
 
-| | |
-|---|---|
-| ![Django Todo](screenshots/a.png) | ![Grafana Dashboard](screenshots/b.png) |
-| ![Django Project Overview](screenshots/c.png) | ![DB Logs](screenshots/d.png) |
-| ![NGINX Overview](screenshots/e.png) | ![Alert Manager list](screenshots/f.png) |
-| ![Alert Manager Dashboard](screenshots/g.png) | ![Slack Notification](screenshots/h.png) |
+### Todo Application
+
+| Todo App | Latest Todos |
+|----------|--------------|
+| ![Todo App](screenshots/todo-app.png) | ![Get Latest Todos](screenshots/get-latest-todos.png) |
+
+### Grafana Dashboards
+
+| Django Overview | Grafana Overview |
+|-----------------|------------------|
+| ![Django Overview](screenshots/django-overview.png) | ![Grafana Overview](screenshots/grafana-overview.png) |
+
+| Grafana Dashboard | Infrastructure Overview |
+|-------------------|------------------------|
+| ![Grafana Dashboard](screenshots/grafana-dashaboard.png) | ![Infrastructure Overview](screenshots/infra-overview.png) |
+
+| Loki Overview | Nginx Overview |
+|---------------|----------------|
+| ![Loki Overview](screenshots/loki-overview.png) | ![Nginx Overview](screenshots/nginx-overview.png) |
+
+| Prometheus Overview | Server Status |
+|---------------------|---------------|
+| ![Prometheus Overview](screenshots/prometheus-overview.png) | ![Server Status](screenshots/server-status.png) |
+
+| Todos Dashboard |
+|-----------------|
+| ![Todos](screenshots/todos.png) |
