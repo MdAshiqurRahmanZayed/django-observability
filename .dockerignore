@@ -1,0 +1,30 @@
+# Git
+.git
+.gitignore
+
+# Python bytecode
+**/__pycache__/
+**/*.py[cod]
+
+# Virtual environment
+**/.venv/
+**/venv/
+
+# IDE
+.idea/
+.vscode/
+
+# macOS
+.DS_Store
+
+# Docs and screenshots
+docs/
+screenshots/
+
+# Monitoring configs (mounted, not baked)
+prometheus/
+grafana/
+loki/
+promtail/
+alertmanager/
+nginx/

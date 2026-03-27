@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e
 
+mkdir -p /app/logs
+
 # ── 1. Wait for PostgreSQL ────────────────────────────────────────────────────
 echo ">>> Waiting for PostgreSQL at ${DB_HOST}:${DB_PORT}..."
 until python -c "

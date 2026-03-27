@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     "django>=6.0.0",
     "django-prometheus>=2.4.0",
+    "fastapi>=0.104.0",
     "gunicorn>=21.2.0",
     "httpx>=0.28.1",
     "mcp[cli]>=1.26.0",
@@ -13,7 +14,9 @@ dependencies = [
     "psycopg2-binary>=2.9.0",
     "python-decouple>=3.8",
     "python-json-logger>=4.0.0",
+    "python-multipart>=0.0.6",
     "sentry-sdk>=2.53.0",
+    "uvicorn[standard]>=0.27.0",
 ]
 
 [dependency-groups]
