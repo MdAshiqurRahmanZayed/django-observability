@@ -11,7 +11,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --group dev
 
 COPY . .
-RUN chmod +x entrypoint.sh
+RUN chmod +x entrypoint.sh && mkdir -p /app/logs
 
 EXPOSE 9000
 
