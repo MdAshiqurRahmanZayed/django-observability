@@ -1,0 +1,27 @@
+FROM ghcr.io/astral-sh/uv:python3.13-alpine
+
+ENV PYTHONUNBUFFERED=1
+ENV VIRTUAL_ENV=/app/.venv
+ENV PATH="/app/.venv/bin:$PATH"
+
+WORKDIR /app
+
+# Copy dependency files from django_app
+COPY django_app/pyproject.toml django_app/uv.lock ./
+
+# Install dependencies (no dev group needed for MCP server)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --group dev
+
+# Copy Django app code (needed for .env and config)
+COPY django_app/ .
+
+# Copy MCP server code
+COPY mcp_server/ /app/mcp_server/
+
+# Create logs directory
+RUN mkdir -p /app/logs
+
+EXPOSE 8000
+
+CMD ["python", "-m", "mcp_server.main"]

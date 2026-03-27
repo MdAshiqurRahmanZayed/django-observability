@@ -176,6 +176,41 @@ services:
     networks:
       - app_network
 
+  obs-mcp:
+    image: django-observability-mcp:latest
+    container_name: obs-mcp
+    build:
+      context: ..
+      dockerfile: django_app/Dockerfile.mcp
+    restart: on-failure
+    ports:
+      - "8000:8000"
+    volumes:
+      - logs_volume:/app/logs
+    env_file:
+      - .env
+    environment:
+      MCP_TRANSPORT: http
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: 8000
+      DB_HOST: obs-postgres
+      DB_PORT: 5432
+      PROMETHEUS_URL: http://obs-prometheus:9090
+      GRAFANA_URL: http://obs-grafana:3000
+      DJANGO_URL: http://obs-django:9000
+    depends_on:
+      obs-postgres:
+        condition: service_healthy
+      obs-prometheus:
+        condition: service_started
+      obs-grafana:
+        condition: service_started
+      obs-django:
+        condition: service_started
+    networks:
+      - app_network
+      - observability_network
+
 volumes:
   postgres_data:
   static_volume:

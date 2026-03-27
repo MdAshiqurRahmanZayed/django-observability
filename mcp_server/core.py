@@ -1,7 +1,7 @@
 """
-MCP Server for Django Observability Project
-============================================
-Provides Claude with tools to:
+MCP Server for Django Observability Project - Core Tools
+========================================================
+Provides tools for:
   - Read/write project files
   - Full CRUD on PostgreSQL (Todo app DB)
   - Query Prometheus metrics (last 30 min resource usage)
@@ -10,23 +10,19 @@ Provides Claude with tools to:
   - Run shell commands (e.g. docker compose restart)
 """
 
-import asyncio
 import json
+import os
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
 import httpx
 import psycopg2
-from mcp.server import Server
-from mcp.server.stdio import stdio_server
-from mcp.types import TextContent, Tool
 from psycopg2.extras import RealDictCursor
 
 # ── Configuration ────────────────────────────────────────────────────────────
 
-# Dynamically resolve project root — works for any user, any machine
-BASE_PATH = Path(__file__).resolve().parent
+BASE_PATH = Path(__file__).resolve().parent.parent
 
 
 def _load_env() -> dict:
@@ -55,18 +51,20 @@ def _require(env: dict, key: str) -> str:
 ENV = _load_env()
 
 DB_CONFIG = {
-    "dbname": ENV.get("DB_NAME", "todo_db"),
+    "dbname": os.getenv("DB_NAME", ENV.get("DB_NAME", "todo_db")),
     "user": _require(ENV, "DB_USER"),
     "password": _require(ENV, "DB_PASSWORD"),
-    "host": "localhost",  # MCP server runs on host, not in Docker
-    "port": 5439,  # External port mapping from Docker
+    "host": os.getenv("DB_HOST", ENV.get("DB_HOST", "localhost")),
+    "port": int(os.getenv("DB_PORT", ENV.get("DB_PORT", "5439"))),
 }
 
-PROMETHEUS_URL = "http://localhost:9090"
-GRAFANA_URL = "http://localhost:3000"
+PROMETHEUS_URL = os.getenv(
+    "PROMETHEUS_URL", ENV.get("PROMETHEUS_URL", "http://localhost:9090")
+)
+GRAFANA_URL = os.getenv("GRAFANA_URL", ENV.get("GRAFANA_URL", "http://localhost:3000"))
 GRAFANA_USER = _require(ENV, "GF_ADMIN_USER")
 GRAFANA_PASS = _require(ENV, "GF_ADMIN_PASSWORD")
-DJANGO_URL = "http://localhost:9000"
+DJANGO_URL = os.getenv("DJANGO_URL", ENV.get("DJANGO_URL", "http://localhost:9000"))
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -109,21 +107,28 @@ def _fmt(obj) -> str:
     return json.dumps(obj, indent=2, default=str)
 
 
-# ── App ───────────────────────────────────────────────────────────────────────
+def _val(r):
+    try:
+        return float(r["data"]["result"][0]["value"][1])
+    except Exception:
+        return None
 
-app = Server("django-observability")
+
+def _pct(v):
+    return f"{v:.1f}%" if v is not None else "N/A"
+
 
 # ── Tool Definitions ──────────────────────────────────────────────────────────
 
 
-@app.list_tools()
-async def list_tools() -> list[Tool]:
+def get_tool_definitions() -> list[dict]:
+    """Return all tool definitions as a list of dicts for reuse."""
     return [
         # ── Filesystem ──
-        Tool(
-            name="read_file",
-            description="Read contents of a project file (path relative to project root)",
-            inputSchema={
+        {
+            "name": "read_file",
+            "description": "Read contents of a project file (path relative to project root)",
+            "inputSchema": {
                 "type": "object",
                 "properties": {
                     "path": {
@@ -133,11 +138,11 @@ async def list_tools() -> list[Tool]:
                 },
                 "required": ["path"],
             },
-        ),
-        Tool(
-            name="write_file",
-            description="Write content to a project file, creating it or overwriting it (path relative to project root)",
-            inputSchema={
+        },
+        {
+            "name": "write_file",
+            "description": "Write content to a project file, creating it or overwriting it (path relative to project root)",
+            "inputSchema": {
                 "type": "object",
                 "properties": {
                     "path": {
@@ -151,11 +156,11 @@ async def list_tools() -> list[Tool]:
                 },
                 "required": ["path", "content"],
             },
-        ),
-        Tool(
-            name="list_directory",
-            description="List files/folders in a project directory",
-            inputSchema={
+        },
+        {
+            "name": "list_directory",
+            "description": "List files/folders in a project directory",
+            "inputSchema": {
                 "type": "object",
                 "properties": {
                     "path": {
@@ -165,20 +170,20 @@ async def list_tools() -> list[Tool]:
                 },
                 "required": ["path"],
             },
-        ),
-        Tool(
-            name="get_file_info",
-            description="Get metadata (size, modified time) for a project file",
-            inputSchema={
+        },
+        {
+            "name": "get_file_info",
+            "description": "Get metadata (size, modified time) for a project file",
+            "inputSchema": {
                 "type": "object",
                 "properties": {"path": {"type": "string"}},
                 "required": ["path"],
             },
-        ),
-        Tool(
-            name="run_shell_command",
-            description="Run a shell command inside the django_app directory (e.g. docker compose restart django). Cwd is always django_app/.",
-            inputSchema={
+        },
+        {
+            "name": "run_shell_command",
+            "description": "Run a shell command inside the django_app directory (e.g. docker compose restart django). Cwd is always django_app/.",
+            "inputSchema": {
                 "type": "object",
                 "properties": {
                     "command": {
@@ -192,17 +197,17 @@ async def list_tools() -> list[Tool]:
                 },
                 "required": ["command"],
             },
-        ),
+        },
         # ── Django DB / Todo — READ ──
-        Tool(
-            name="get_todo_stats",
-            description="Get Todo statistics from the PostgreSQL database: total, completed, pending counts and the latest todos",
-            inputSchema={"type": "object", "properties": {}},
-        ),
-        Tool(
-            name="list_todos",
-            description="List todos from the database with optional filter",
-            inputSchema={
+        {
+            "name": "get_todo_stats",
+            "description": "Get Todo statistics from the PostgreSQL database: total, completed, pending counts and the latest todos",
+            "inputSchema": {"type": "object", "properties": {}},
+        },
+        {
+            "name": "list_todos",
+            "description": "List todos from the database with optional filter",
+            "inputSchema": {
                 "type": "object",
                 "properties": {
                     "status": {
@@ -216,11 +221,11 @@ async def list_tools() -> list[Tool]:
                     },
                 },
             },
-        ),
-        Tool(
-            name="get_todo",
-            description="Get a single Todo item by ID",
-            inputSchema={
+        },
+        {
+            "name": "get_todo",
+            "description": "Get a single Todo item by ID",
+            "inputSchema": {
                 "type": "object",
                 "properties": {
                     "id": {
@@ -230,11 +235,11 @@ async def list_tools() -> list[Tool]:
                 },
                 "required": ["id"],
             },
-        ),
-        Tool(
-            name="run_db_query",
-            description="Run a read-only SQL SELECT query against the PostgreSQL database",
-            inputSchema={
+        },
+        {
+            "name": "run_db_query",
+            "description": "Run a read-only SQL SELECT query against the PostgreSQL database",
+            "inputSchema": {
                 "type": "object",
                 "properties": {
                     "sql": {
@@ -244,23 +249,23 @@ async def list_tools() -> list[Tool]:
                 },
                 "required": ["sql"],
             },
-        ),
+        },
         # ── Django DB / Todo — WRITE ──
-        Tool(
-            name="create_todo",
-            description="Create a new Todo item in the database",
-            inputSchema={
+        {
+            "name": "create_todo",
+            "description": "Create a new Todo item in the database",
+            "inputSchema": {
                 "type": "object",
                 "properties": {
                     "title": {"type": "string", "description": "Title of the new todo"},
                 },
                 "required": ["title"],
             },
-        ),
-        Tool(
-            name="update_todo",
-            description="Update a Todo item's title and/or completed status by ID",
-            inputSchema={
+        },
+        {
+            "name": "update_todo",
+            "description": "Update a Todo item's title and/or completed status by ID",
+            "inputSchema": {
                 "type": "object",
                 "properties": {
                     "id": {
@@ -275,11 +280,11 @@ async def list_tools() -> list[Tool]:
                 },
                 "required": ["id"],
             },
-        ),
-        Tool(
-            name="delete_todo",
-            description="Delete a Todo item by ID",
-            inputSchema={
+        },
+        {
+            "name": "delete_todo",
+            "description": "Delete a Todo item by ID",
+            "inputSchema": {
                 "type": "object",
                 "properties": {
                     "id": {
@@ -289,11 +294,11 @@ async def list_tools() -> list[Tool]:
                 },
                 "required": ["id"],
             },
-        ),
-        Tool(
-            name="bulk_delete_todos",
-            description="Delete multiple Todo items by a list of IDs",
-            inputSchema={
+        },
+        {
+            "name": "bulk_delete_todos",
+            "description": "Delete multiple Todo items by a list of IDs",
+            "inputSchema": {
                 "type": "object",
                 "properties": {
                     "ids": {
@@ -304,11 +309,11 @@ async def list_tools() -> list[Tool]:
                 },
                 "required": ["ids"],
             },
-        ),
-        Tool(
-            name="mark_todo_complete",
-            description="Mark a Todo item as completed by ID",
-            inputSchema={
+        },
+        {
+            "name": "mark_todo_complete",
+            "description": "Mark a Todo item as completed by ID",
+            "inputSchema": {
                 "type": "object",
                 "properties": {
                     "id": {
@@ -318,11 +323,11 @@ async def list_tools() -> list[Tool]:
                 },
                 "required": ["id"],
             },
-        ),
-        Tool(
-            name="mark_todo_incomplete",
-            description="Mark a Todo item as incomplete (pending) by ID",
-            inputSchema={
+        },
+        {
+            "name": "mark_todo_incomplete",
+            "description": "Mark a Todo item as incomplete (pending) by ID",
+            "inputSchema": {
                 "type": "object",
                 "properties": {
                     "id": {
@@ -332,11 +337,11 @@ async def list_tools() -> list[Tool]:
                 },
                 "required": ["id"],
             },
-        ),
-        Tool(
-            name="run_db_write",
-            description="Run a raw INSERT, UPDATE, or DELETE SQL query against the PostgreSQL database",
-            inputSchema={
+        },
+        {
+            "name": "run_db_write",
+            "description": "Run a raw INSERT, UPDATE, or DELETE SQL query against the PostgreSQL database",
+            "inputSchema": {
                 "type": "object",
                 "properties": {
                     "sql": {
@@ -351,12 +356,12 @@ async def list_tools() -> list[Tool]:
                 },
                 "required": ["sql"],
             },
-        ),
+        },
         # ── Prometheus / Metrics ──
-        Tool(
-            name="get_server_resources",
-            description="Get CPU usage, memory usage, and disk usage from the past 30 minutes via Prometheus",
-            inputSchema={
+        {
+            "name": "get_server_resources",
+            "description": "Get CPU usage, memory usage, and disk usage from the past 30 minutes via Prometheus",
+            "inputSchema": {
                 "type": "object",
                 "properties": {
                     "minutes": {
@@ -365,11 +370,11 @@ async def list_tools() -> list[Tool]:
                     }
                 },
             },
-        ),
-        Tool(
-            name="get_django_metrics",
-            description="Get Django HTTP request metrics from the past 30 minutes (request rate, error rate, response time)",
-            inputSchema={
+        },
+        {
+            "name": "get_django_metrics",
+            "description": "Get Django HTTP request metrics from the past 30 minutes (request rate, error rate, response time)",
+            "inputSchema": {
                 "type": "object",
                 "properties": {
                     "minutes": {
@@ -378,44 +383,44 @@ async def list_tools() -> list[Tool]:
                     }
                 },
             },
-        ),
-        Tool(
-            name="prometheus_query",
-            description="Run a custom PromQL query against Prometheus",
-            inputSchema={
+        },
+        {
+            "name": "prometheus_query",
+            "description": "Run a custom PromQL query against Prometheus",
+            "inputSchema": {
                 "type": "object",
                 "properties": {
                     "query": {"type": "string", "description": "PromQL query string"}
                 },
                 "required": ["query"],
             },
-        ),
+        },
         # ── Grafana ──
-        Tool(
-            name="get_grafana_dashboards",
-            description="List all Grafana dashboards",
-            inputSchema={"type": "object", "properties": {}},
-        ),
-        Tool(
-            name="get_grafana_alerts",
-            description="Get current Grafana alert rules and their states",
-            inputSchema={"type": "object", "properties": {}},
-        ),
-        Tool(
-            name="get_grafana_datasources",
-            description="List all configured Grafana datasources",
-            inputSchema={"type": "object", "properties": {}},
-        ),
+        {
+            "name": "get_grafana_dashboards",
+            "description": "List all Grafana dashboards",
+            "inputSchema": {"type": "object", "properties": {}},
+        },
+        {
+            "name": "get_grafana_alerts",
+            "description": "Get current Grafana alert rules and their states",
+            "inputSchema": {"type": "object", "properties": {}},
+        },
+        {
+            "name": "get_grafana_datasources",
+            "description": "List all configured Grafana datasources",
+            "inputSchema": {"type": "object", "properties": {}},
+        },
         # ── Service Health ──
-        Tool(
-            name="check_service_health",
-            description="Check health/reachability of all stack services: Django, Prometheus, Grafana, Loki, Alertmanager, Node Exporter, Postgres",
-            inputSchema={"type": "object", "properties": {}},
-        ),
-        Tool(
-            name="get_full_status",
-            description="One-shot dashboard: service health + server resources (CPU/MEM/DISK) + Django metrics + Todo stats for the past 30 minutes",
-            inputSchema={
+        {
+            "name": "check_service_health",
+            "description": "Check health/reachability of all stack services: Django, Prometheus, Grafana, Loki, Alertmanager, Node Exporter, Postgres",
+            "inputSchema": {"type": "object", "properties": {}},
+        },
+        {
+            "name": "get_full_status",
+            "description": "One-shot dashboard: service health + server resources (CPU/MEM/DISK) + Django metrics + Todo stats for the past 30 minutes",
+            "inputSchema": {
                 "type": "object",
                 "properties": {
                     "minutes": {
@@ -424,20 +429,16 @@ async def list_tools() -> list[Tool]:
                     }
                 },
             },
-        ),
+        },
     ]
 
 
 # ── Tool Implementations ──────────────────────────────────────────────────────
 
 
-@app.call_tool()
-async def call_tool(name: str, arguments: dict) -> list[TextContent]:
-    try:
-        result = await _dispatch(name, arguments)
-    except Exception as e:
-        result = f"❌ Error in tool '{name}': {type(e).__name__}: {e}"
-    return [TextContent(type="text", text=result)]
+async def call_tool(name: str, arguments: dict) -> str:
+    """Dispatch tool call and return result string."""
+    return await _dispatch(name, arguments)
 
 
 async def _dispatch(name: str, args: dict) -> str:
@@ -752,15 +753,6 @@ async def _dispatch(name: str, args: dict) -> str:
             f"avg_over_time(((1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100)[{minutes}m:])"
         )
 
-        def _val(r):
-            try:
-                return float(r["data"]["result"][0]["value"][1])
-            except Exception:
-                return None
-
-        def _pct(v):
-            return f"{v:.1f}%" if v is not None else "N/A"
-
         return (
             f"🖥️  Server Resources (last {minutes} min)\n"
             f"{'─' * 40}\n"
@@ -785,12 +777,6 @@ async def _dispatch(name: str, args: dict) -> str:
         total_req = await _prometheus_query(
             f"sum(increase(django_http_requests_total_by_method_total[{window}]))"
         )
-
-        def _val(r):
-            try:
-                return float(r["data"]["result"][0]["value"][1])
-            except Exception:
-                return None
 
         rps = _val(req_rate)
         erps = _val(err_rate)
@@ -848,7 +834,7 @@ async def _dispatch(name: str, args: dict) -> str:
     # ── Health Check ──────────────────────────────────────────────────────────
     if name == "check_service_health":
         services = {
-            "Django (app)": ("http", "http://localhost:9000/metrics"),
+            "Django (app)": ("http", f"{DJANGO_URL}/metrics"),
             "Prometheus": ("http", f"{PROMETHEUS_URL}/-/healthy"),
             "Grafana": ("http", f"{GRAFANA_URL}/api/health"),
             "Loki": ("http", "http://localhost:3100/ready"),
@@ -894,15 +880,3 @@ async def _dispatch(name: str, args: dict) -> str:
         return "\n".join(parts)
 
     return f"Unknown tool: {name}"
-
-
-# ── Entry Point ───────────────────────────────────────────────────────────────
-
-
-async def main():
-    async with stdio_server() as (read_stream, write_stream):
-        await app.run(read_stream, write_stream, app.create_initialization_options())
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
