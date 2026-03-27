@@ -45,6 +45,7 @@ The observability stack provides complete monitoring for your Django application
 | 06 | [Alertmanager](./06-alertmanager.md) | Alert routing & notifications |
 | 07 | [Nginx](./07-nginx.md) | Reverse proxy & static files |
 | 08 | [MCP Server](./08-mcp-server.md) | AI tool integration |
+| 09 | [PostgreSQL](./09-postgres.md) | Database & data persistence |
 
 ## Quick Start
 
@@ -139,7 +140,9 @@ django-observability/
 │   ├── 04-loki.md
 │   ├── 05-promtail.md
 │   ├── 06-alertmanager.md
-│   └── 07-nginx.md
+│   ├── 07-nginx.md
+│   ├── 08-mcp-server.md
+│   └── 09-postgres.md
 ├── prometheus/
 │   ├── prometheus.yml        # Scrape config
 │   └── rules/                # Alert rules
