@@ -37,3 +37,6 @@ media/
 *.swo
 *~
 .DS_Store
+
+# MkDocs build output
+site/
