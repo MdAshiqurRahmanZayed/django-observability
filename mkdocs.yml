@@ -71,16 +71,6 @@ markdown_extensions:
 
 nav:
   - 🏠 Home: index.md
-  - 🚀 Run:
-    - Quick Start: run/quickstart.md
-    - Docker Commands: run/docker.md
-    - Django App: run/django.md
-    - Prometheus: run/prometheus.md
-    - Grafana: run/grafana.md
-    - Loki & Promtail: run/loki.md
-    - Alertmanager: run/alertmanager.md
-    - MCP Server: run/mcp.md
-    - All Services: run/all-services.md
   - 📚 Tutorial:
     - Getting Started: getting-started.md
     - Architecture Overview: architecture.md
