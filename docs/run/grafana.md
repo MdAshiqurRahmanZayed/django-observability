@@ -201,7 +201,7 @@ docker volume inspect django_app_grafana_data
     # Reset password via environment
     # Edit .env:
     GF_ADMIN_PASSWORD=newpassword
-    
+
     # Restart
     docker compose -f django_app/docker-compose.yml restart obs-grafana
     ```
@@ -210,10 +210,10 @@ docker volume inspect django_app_grafana_data
     ```bash
     # Test Prometheus from Grafana
     docker exec obs-grafana wget -qO- http://obs-prometheus:9090/-/healthy
-    
+
     # Test Loki from Grafana
     docker exec obs-grafana wget -qO- http://obs-loki:3100/ready
-    
+
     # Check datasources config
     docker exec obs-grafana cat /etc/grafana/provisioning/datasources/datasources.yml
     ```
@@ -222,7 +222,7 @@ docker volume inspect django_app_grafana_data
     ```bash
     # Verify Prometheus has data
     curl http://localhost:9090/api/v1/query?query=up
-    
+
     # Check Grafana logs
     docker logs obs-grafana | tail -20
     ```

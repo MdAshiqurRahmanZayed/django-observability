@@ -28,12 +28,11 @@ This project is a **hands-on tutorial** for adding observability to your Django 
 - 📈 **Visualize data** - Create dashboards to understand your app
 - 🤖 **Integrate AI** - Use MCP server for AI-powered insights
 
-
 ---
 
 ## 🎯 What You'll Learn
 
-### By the end of this tutorial, you'll be able to:
+### By the end of this tutorial, you'll be able to
 
 | Skill | What You'll Master |
 |-------|-------------------|
@@ -72,12 +71,12 @@ docker compose -f django_app/docker-compose.yml up -d
 
 | Service | URL | What It Does |
 |---------|-----|--------------|
-| 🌐 Django App | http://localhost | Your application |
-| 📊 Grafana | http://localhost:3000 | Dashboards & visualization |
-| 📈 Prometheus | http://localhost:9090 | Metrics & queries |
-| 🔔 Alertmanager | http://localhost:9093 | Alert routing |
-| 📝 Loki | http://localhost:3100 | Log aggregation |
-| 🗄️ pgAdmin | http://localhost:5050 | Database admin |
+| 🌐 Django App | <http://localhost> | Your application |
+| 📊 Grafana | <http://localhost:3000> | Dashboards & visualization |
+| 📈 Prometheus | <http://localhost:9090> | Metrics & queries |
+| 🔔 Alertmanager | <http://localhost:9093> | Alert routing |
+| 📝 Loki | <http://localhost:3100> | Log aggregation |
+| 🗄️ pgAdmin | <http://localhost:5050> | Database admin |
 
 ---
 
@@ -86,12 +85,15 @@ docker compose -f django_app/docker-compose.yml up -d
 Follow these steps in order:
 
 ### Step 1: Setup
+
 → [Getting Started](getting-started.md) - Install and configure the stack
 
 ### Step 2: Understand
+
 → [Architecture Overview](architecture.md) - Learn how everything connects
 
 ### Step 3: Explore Modules
+
 → [Django App](modules/01-django-app.md) - Understand the application
 
 → [Prometheus](modules/02-prometheus.md) - Learn metrics collection
@@ -103,6 +105,7 @@ Follow these steps in order:
 → [Alertmanager](modules/06-alertmanager.md) - Set up alerts
 
 ### Step 4: Advanced
+
 → [MCP Server](modules/08-mcp-server.md) - AI integration
 
 ---
@@ -115,22 +118,22 @@ graph TB
         A[Nginx] --> B[Django]
         B --> C[PostgreSQL]
     end
-    
+
     subgraph "Metrics"
         B --> D[Prometheus]
         D --> E[Alertmanager]
     end
-    
+
     subgraph "Logs"
         B --> F[Promtail]
         F --> G[Loki]
     end
-    
+
     subgraph "Visualization"
         D --> H[Grafana]
         G --> H
     end
-    
+
     E --> I[Slack]
 ```
 

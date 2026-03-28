@@ -139,10 +139,10 @@ ALLOWED_HOSTS=*
     ```bash
     # Check PostgreSQL is running
     docker ps | grep obs-postgres
-    
+
     # Check PostgreSQL health
     docker inspect obs-postgres --format '{{.State.Health.Status}}'
-    
+
     # Test connection from Django
     docker exec obs-django python manage.py dbshell -c "SELECT 1;"
     ```
@@ -151,7 +151,7 @@ ALLOWED_HOSTS=*
     ```bash
     # Check logs
     docker logs obs-django
-    
+
     # Check if port 9000 is in use
     lsof -i :9000
     ```
@@ -160,7 +160,7 @@ ALLOWED_HOSTS=*
     ```bash
     # Test metrics endpoint
     curl http://localhost:9000/metrics
-    
+
     # Check django_prometheus is installed
     docker exec obs-django pip list | grep prometheus
     ```

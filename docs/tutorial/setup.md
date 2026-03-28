@@ -29,11 +29,11 @@ Before starting, verify you have these installed:
     # Check Docker
     docker --version
     # Should show: Docker version 20.10+
-    
+
     # Check Docker Compose
     docker compose version
     # Should show: Docker Compose version 2.0+
-    
+
     # Check Git
     git --version
     # Should show: git version 2.0+
@@ -44,10 +44,10 @@ Before starting, verify you have these installed:
     ```powershell
     # Check Docker (in PowerShell or WSL)
     docker --version
-    
+
     # Check Docker Compose
     docker compose version
-    
+
     # Check Git
     git --version
     ```
@@ -57,22 +57,22 @@ Before starting, verify you have these installed:
     ```bash
     # Check Docker
     docker --version
-    
+
     # Check Docker Compose
     docker compose version
-    
+
     # Check Git
     git --version
     ```
 
 ??? tip "Don't have Docker?"
-    
+
     Download and install Docker Desktop:
-    
+
     - [Mac](https://desktop.docker.com/mac/main/arm64/Docker.dmg)
     - [Windows](https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe)
     - [Linux](https://docs.docker.com/engine/install/)
-    
+
     After installation, start Docker Desktop and wait for it to be ready.
 
 ---
@@ -124,7 +124,7 @@ GF_ADMIN_PASSWORD=admin  # Grafana admin password
 ```
 
 ??? info "What each setting does"
-    
+
     | Setting | Purpose | Default |
     |---------|---------|---------|
     | `DB_NAME` | PostgreSQL database name | todo_db |
@@ -221,7 +221,7 @@ Open these URLs in your browser:
 
 ## 🎉 Setup Complete!
 
-Your observability stack is now running! 
+Your observability stack is now running!
 
 ### What's Next?
 

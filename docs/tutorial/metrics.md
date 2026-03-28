@@ -169,35 +169,35 @@ rate(django_http_requests_total[5m])
 ## 🔧 Troubleshooting
 
 ??? failure "No metrics appearing"
-    
+
     **Check if Django is exposing metrics:**
-    
+
     ```bash
     curl http://localhost:9000/metrics | head
     ```
-    
+
     **Check if Prometheus can reach Django:**
-    
+
     ```bash
     docker exec obs-prometheus wget -qO- http://obs-django:9000/metrics | head
     ```
-    
+
     **Check Prometheus targets:**
-    
+
     ```bash
     curl http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | select(.labels.job=="django")'
     ```
 
 ??? failure "Prometheus shows target as DOWN"
-    
+
     **Verify containers are on same network:**
-    
+
     ```bash
     docker network inspect django_app_observability_network | grep -A5 obs-django
     ```
-    
+
     **Restart Prometheus:**
-    
+
     ```bash
     docker compose -f django_app/docker-compose.yml restart obs-prometheus
     ```

@@ -220,10 +220,10 @@ Once configured, Claude can use the tools:
     ```bash
     # Check container
     docker ps | grep obs-mcp-server
-    
+
     # Check logs
     docker logs obs-mcp-server
-    
+
     # Test health
     curl http://localhost:8000/health
     ```
@@ -232,7 +232,7 @@ Once configured, Claude can use the tools:
     ```bash
     # Check PostgreSQL is running
     docker ps | grep obs-postgres
-    
+
     # Test connection from MCP server
     docker exec obs-mcp-server python -c "import psycopg2; psycopg2.connect(host='obs-postgres', user='postgres', password='postgres', dbname='todo_db')"
     ```
@@ -241,7 +241,7 @@ Once configured, Claude can use the tools:
     ```bash
     # Check Prometheus is running
     curl http://localhost:9090/-/healthy
-    
+
     # Test from MCP server
     docker exec obs-mcp-server wget -qO- http://obs-prometheus:9090/-/healthy
     ```

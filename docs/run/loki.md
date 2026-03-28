@@ -251,13 +251,13 @@ Data retention: 30 days (configurable in loki-config.yml)
     ```bash
     # Check Promtail is running
     docker ps | grep promtail
-    
+
     # Check Promtail logs
     docker logs obs-promtail | tail -20
-    
+
     # Check log file exists
     docker exec obs-django ls -la /app/logs/
-    
+
     # Test push manually
     curl -X POST 'http://localhost:3100/loki/api/v1/push' \
       -H 'Content-Type: application/json' \
@@ -268,10 +268,10 @@ Data retention: 30 days (configurable in loki-config.yml)
     ```bash
     # Check volume mount
     docker inspect obs-promtail | jq '.[0].Mounts'
-    
+
     # Check Promtail config
     docker exec obs-promtail cat /etc/promtail/config.yml
-    
+
     # Restart Promtail
     docker compose -f django_app/docker-compose.yml restart obs-promtail
     ```
@@ -280,7 +280,7 @@ Data retention: 30 days (configurable in loki-config.yml)
     ```bash
     # Reduce query limit
     curl 'http://localhost:3100/loki/api/v1/query?query=%7Bapp%3D%22django%22%7D&limit=100'
-    
+
     # Check Loki logs
     docker logs obs-loki | tail -20
     ```

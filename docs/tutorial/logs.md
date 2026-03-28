@@ -37,9 +37,9 @@ Django App → Log File → Promtail → Loki → Grafana
 ### Key Concept: No Manual Push Needed!
 
 ???+ info "You Don't Push Logs Manually"
-    
+
     Unlike some systems, you don't need to write code to push logs. The flow is:
-    
+
     ```
     You write: logger.info("message")
          ↓
@@ -51,7 +51,7 @@ Django App → Log File → Promtail → Loki → Grafana
          ↓
     Logs appear in Grafana
     ```
-    
+
     **You just call `logger.info()` - everything else is automatic!**
 
 ---
@@ -212,40 +212,40 @@ Promtail parses this and extracts labels:
 ## 🔧 Troubleshooting
 
 ??? failure "No logs in Loki"
-    
+
     **Check if log file exists:**
-    
+
     ```bash
     docker exec obs-django ls -la /app/logs/
     ```
-    
+
     **Check Promtail is tailing:**
-    
+
     ```bash
     docker logs obs-promtail | grep "django.log"
     ```
-    
+
     **Test push manually:**
-    
+
     ```bash
     curl -X POST 'http://localhost:3100/loki/api/v1/push' \
       -H 'Content-Type: application/json' \
       -d '{"streams":[{"stream":{"app":"test"},"values":[["'"$(date +%s)"'000000000","test"]]}]}'
-    
+
     # Query test logs
     curl 'http://localhost:3100/loki/api/v1/query?query=%7Bapp%3D%22test%22%7D'
     ```
 
 ??? failure "Promtail not seeing new logs"
-    
+
     **Check volume mount:**
-    
+
     ```bash
     docker inspect obs-promtail | jq '.[0].Mounts'
     ```
-    
+
     **Restart Promtail:**
-    
+
     ```bash
     docker compose -f django_app/docker-compose.yml restart obs-promtail
     ```

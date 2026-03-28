@@ -133,29 +133,29 @@ docker compose -f django_app/docker-compose.yml stop obs-django
 ## 🔧 Troubleshooting
 
 ??? failure "Alerts not firing"
-    
+
     **Check Prometheus rules:**
-    
+
     ```bash
     curl http://localhost:9090/api/v1/rules | jq
     ```
-    
+
     **Check alert state:**
-    
+
     ```bash
     curl http://localhost:9090/api/v1/alerts | jq
     ```
 
 ??? failure "Slack notifications not working"
-    
+
     **Check webhook URL:**
-    
+
     ```bash
     grep SLACK_WEBHOOK_URL django_app/.env
     ```
-    
+
     **Test webhook manually:**
-    
+
     ```bash
     curl -X POST -H 'Content-type: application/json' \
       --data '{"text":"Test alert"}' $SLACK_WEBHOOK_URL
