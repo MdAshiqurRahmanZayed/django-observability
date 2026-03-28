@@ -1,14 +1,6 @@
 name: Deploy Documentation
 
 on:
-  push:
-    branches:
-      - main
-      - feat/*
-      - fix/*
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
@@ -51,7 +43,6 @@ jobs:
   deploy:
     name: 🚀 Deploy to GitHub Pages
     needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Download artifact
