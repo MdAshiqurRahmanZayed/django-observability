@@ -21,7 +21,7 @@
 }
 
 .md-footer-copyright__highlight {
-  color: var(--md-default-fg-color--light);
+  color: var(--md-footer-fg-color);
 }
 
 .md-footer-social {
