@@ -6,12 +6,18 @@ site_url: https://mdashiqurrahmanzayed.github.io/django-observability/
 repo_name: django-observability
 repo_url: https://github.com/MdAshiqurRahmanZayed/django-observability
 
+copyright: Copyright &copy; 2026 MdAshiqurRahmanZayed
+
+extra_css:
+  - css/footer.css
+
 docs_dir: docs
 
 dev_addr: 127.0.0.1:8001
 
 theme:
   name: material
+  custom_dir: docs/overrides
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
