@@ -1,0 +1,108 @@
+site_name: Django Observability Stack
+site_description: A complete tutorial & guide for building observability in Django applications with Prometheus, Grafana, Loki, and AI integration
+site_author: MdAshiqurRahmanZayed
+site_url: https://mdashiqurrahmanzayed.github.io/django-observability/
+
+repo_name: django-observability
+repo_url: https://github.com/MdAshiqurRahmanZayed/django-observability
+
+docs_dir: site-docs
+
+dev_addr: 127.0.0.1:8001
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search:
+      separator: '[\s\-\.]+'
+  - git-revision-date-localized:
+      enable_creation_date: true
+      enable_git_follow: false
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - tables
+  - footnotes
+  - attr_list
+  - md_in_html
+  - def_list
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.snippets
+
+nav:
+  - 🏠 Home: index.md
+  - 🚀 Run:
+    - Quick Start: run/quickstart.md
+    - Docker Commands: run/docker.md
+    - Django App: run/django.md
+    - Prometheus: run/prometheus.md
+    - Grafana: run/grafana.md
+    - Loki & Promtail: run/loki.md
+    - Alertmanager: run/alertmanager.md
+    - MCP Server: run/mcp.md
+    - All Services: run/all-services.md
+  - 📚 Tutorial:
+    - Getting Started: getting-started.md
+    - Architecture Overview: architecture.md
+    - Step 1 - Setup: tutorial/setup.md
+    - Step 2 - Metrics: tutorial/metrics.md
+    - Step 3 - Logs: tutorial/logs.md
+    - Step 4 - Alerts: tutorial/alerts.md
+    - Step 5 - Visualization: tutorial/visualization.md
+  - 📦 Modules:
+    - Django App: modules/01-django-app.md
+    - Prometheus: modules/02-prometheus.md
+    - Grafana: modules/03-grafana.md
+    - Loki: modules/04-loki.md
+    - Promtail: modules/05-promtail.md
+    - Alertmanager: modules/06-alertmanager.md
+    - Nginx: modules/07-nginx.md
+    - PostgreSQL: modules/09-postgres.md
+  - 🤖 AI Integration:
+    - MCP Server: modules/08-mcp-server.md
+  - 📷 Screenshots: screenshots.md
+  - 🤝 Contributing: contributing.md
+  - 📖 Reference:
+    - API Endpoints: reference/api.md
+    - Configuration: reference/config.md
+    - Troubleshooting: reference/troubleshooting.md
