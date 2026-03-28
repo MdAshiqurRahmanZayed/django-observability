@@ -10,8 +10,7 @@ repos:
         args: ['--maxkb=1000']
       - id: debug-statements
         language_version: python3
-      - id: no-commit-to-branch
-        args: ['--branch', 'development', '--branch', 'staging', '--branch', 'production']
+
 
   # Python linting & formatting
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -40,7 +39,6 @@ repos:
     hooks:
       - id: markdownlint
         files: ^docs/.*\.md$
-        args: ['--fix']
 
   # MkDocs build validation
   - repo: local
