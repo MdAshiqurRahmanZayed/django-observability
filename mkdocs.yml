@@ -6,7 +6,7 @@ site_url: https://mdashiqurrahmanzayed.github.io/django-observability/
 repo_name: django-observability
 repo_url: https://github.com/MdAshiqurRahmanZayed/django-observability
 
-docs_dir: site-docs
+docs_dir: docs
 
 dev_addr: 127.0.0.1:8001
 
