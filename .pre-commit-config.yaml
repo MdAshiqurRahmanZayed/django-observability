@@ -28,12 +28,6 @@ repos:
         language: python
         files: ^django_app/.*\.py$
 
-  # YAML linting (disabled - existing files need fixing)
-  # - repo: https://github.com/adrienverge/yamllint
-  #   rev: v1.35.1
-  #   hooks:
-  #     - id: yamllint
-  #       exclude: ^mkdocs\.yml$
 
   # Markdown linting
   - repo: https://github.com/igorshubovych/markdownlint-cli
