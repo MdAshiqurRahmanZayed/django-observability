@@ -19,11 +19,11 @@ Before you begin, make sure you have:
 | Terminal | Any | Built-in on Mac/Linux |
 
 ??? tip "Docker Desktop Tips"
-    
+
     - **Mac**: Docker Desktop for Mac
     - **Windows**: Docker Desktop for Windows (enable WSL2)
     - **Linux**: Install via your package manager
-    
+
     Make sure Docker is running before proceeding!
 
 ---
@@ -115,11 +115,11 @@ Open these URLs in your browser:
 
 | Service | URL | Credentials | What You'll See |
 |---------|-----|-------------|-----------------|
-| 🌐 **Django App** | http://localhost | - | Todo application |
-| 📊 **Grafana** | http://localhost:3000 | admin / admin | Dashboards & graphs |
-| 📈 **Prometheus** | http://localhost:9090 | - | Metrics & queries |
-| 🔔 **Alertmanager** | http://localhost:9093 | - | Alert status |
-| 🗄️ **pgAdmin** | http://localhost:5050 | admin@admin.com / admin | Database admin |
+| 🌐 **Django App** | <http://localhost> | - | Todo application |
+| 📊 **Grafana** | <http://localhost:3000> | admin / admin | Dashboards & graphs |
+| 📈 **Prometheus** | <http://localhost:9090> | - | Metrics & queries |
+| 🔔 **Alertmanager** | <http://localhost:9093> | - | Alert status |
+| 🗄️ **pgAdmin** | <http://localhost:5050> | <admin@admin.com> / admin | Database admin |
 
 ---
 
@@ -216,48 +216,48 @@ docker compose -f django_app/docker-compose.yml up -d --build obs-django
 ## ❓ Troubleshooting
 
 ??? failure "Docker not running"
-    
+
     Make sure Docker Desktop is running:
-    
+
     ```bash
     docker ps
     ```
-    
+
     If you get an error, start Docker Desktop and try again.
 
 ??? failure "Port already in use"
-    
+
     If you get "port is already allocated" error:
-    
+
     ```bash
     # Find what's using the port
     lsof -i :3000
-    
+
     # Stop the conflicting service or change the port in docker-compose.yml
     ```
 
 ??? failure "Services not starting"
-    
+
     Check logs for errors:
-    
+
     ```bash
     docker compose -f django_app/docker-compose.yml logs
     ```
-    
+
     Common issues:
     - Database not ready (wait a few seconds)
     - Environment variables not set (check `.env`)
     - Docker resources insufficient (increase memory in Docker Desktop)
 
 ??? failure "Cannot connect to localhost"
-    
+
     Try these URLs instead:
-    
+
     - http://127.0.0.1:3000 (Grafana)
     - http://0.0.0.0:3000 (Grafana)
-    
+
     Or check if containers are running:
-    
+
     ```bash
     docker ps
     ```

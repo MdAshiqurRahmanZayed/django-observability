@@ -103,7 +103,7 @@ sum(rate(django_http_requests_total[5m]))
 2. Enter query:
 
 ```promql
-histogram_quantile(0.95, 
+histogram_quantile(0.95,
   sum(rate(django_http_requests_latency_seconds_bucket[5m])) by (le)
 )
 ```
@@ -176,23 +176,23 @@ sum(rate(django_http_responses_total_by_status_total{status=~"5.."}[5m]))
 ## 🔧 Troubleshooting
 
 ??? failure "No data in panels"
-    
+
     **Check datasource:**
-    
+
     1. Go to Configuration → Data Sources
     2. Verify Prometheus URL: `http://obs-prometheus:9090`
     3. Click "Save & Test"
-    
+
     **Check if metrics exist:**
-    
+
     ```bash
     curl http://localhost:9090/api/v1/query?query=up
     ```
 
 ??? failure "Loki datasource not working"
-    
+
     **Verify Loki datasource:**
-    
+
     1. Go to Configuration → Data Sources
     2. Click Loki datasource
     3. URL should be: `http://obs-loki:3100`

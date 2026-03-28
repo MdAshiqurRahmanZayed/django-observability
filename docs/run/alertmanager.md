@@ -213,10 +213,10 @@ curl -X POST -H 'Content-type: application/json' \
     ```bash
     # Check Prometheus has rules
     curl http://localhost:9090/api/v1/rules | jq
-    
+
     # Check Alertmanager is configured in Prometheus
     curl http://localhost:9090/api/v1/alertmanagers | jq
-    
+
     # Check Alertmanager logs
     docker logs obs-alertmanager | tail -20
     ```
@@ -225,12 +225,12 @@ curl -X POST -H 'Content-type: application/json' \
     ```bash
     # Check webhook URL is set
     docker exec obs-alertmanager env | grep SLACK
-    
+
     # Test webhook manually
     curl -X POST -H 'Content-type: application/json' \
       --data '{"text":"Test"}' \
       $SLACK_WEBHOOK_URL
-    
+
     # Check Alertmanager receiver config
     curl http://localhost:9093/api/v1/status | jq '.config.receivers'
     ```
@@ -239,7 +239,7 @@ curl -X POST -H 'Content-type: application/json' \
     ```bash
     # Check routing
     curl http://localhost:9093/api/v1/status | jq '.config.route'
-    
+
     # Check group_wait setting (may need to wait)
     # Default is 30s
     ```

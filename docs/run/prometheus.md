@@ -206,10 +206,10 @@ Data retention: 15 days (configurable in docker-compose.yml)
     ```bash
     # Check target can be reached
     docker exec obs-prometheus wget -qO- http://obs-django:9000/metrics
-    
+
     # Check network
     docker network inspect django_app_observability_network
-    
+
     # Restart target service
     docker compose -f django_app/docker-compose.yml restart obs-django
     ```
@@ -218,10 +218,10 @@ Data retention: 15 days (configurable in docker-compose.yml)
     ```bash
     # Check if metrics exist
     curl http://localhost:9090/api/v1/query?query=up
-    
+
     # Wait 15 seconds for first scrape
     sleep 15
-    
+
     # Check scrape logs
     docker logs obs-prometheus | grep "scrape"
     ```
@@ -230,10 +230,10 @@ Data retention: 15 days (configurable in docker-compose.yml)
     ```bash
     # Check rules are loaded
     curl http://localhost:9090/api/v1/rules | jq
-    
+
     # Check alert states
     curl http://localhost:9090/api/v1/alerts | jq
-    
+
     # Verify Alertmanager is reachable
     docker exec obs-prometheus wget -qO- http://obs-alertmanager:9093/-/healthy
     ```

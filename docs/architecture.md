@@ -17,45 +17,45 @@ graph TB
     subgraph "User Layer"
         U[Browser]
     end
-    
+
     subgraph "Application Layer"
         N[Nginx<br/>:80]
         D[Django<br/>:9000]
         DB[PostgreSQL<br/>:5432]
     end
-    
+
     subgraph "Metrics Layer"
         P[Prometheus<br/>:9090]
         NE[Node Exporter<br/>:9100]
     end
-    
+
     subgraph "Logging Layer"
         PT[Promtail]
         L[Loki<br/>:3100]
     end
-    
+
     subgraph "Visualization Layer"
         G[Grafana<br/>:3000]
     end
-    
+
     subgraph "Alerting Layer"
         AM[Alertmanager<br/>:9093]
         S[Slack]
     end
-    
+
     U --> N
     N --> D
     D --> DB
-    
+
     D -->|/metrics| P
     NE -->|/metrics| P
-    
+
     D -->|log files| PT
     PT -->|/loki/api/v1/push| L
-    
+
     P -->|query| G
     L -->|query| G
-    
+
     P -->|alerts| AM
     AM -->|notifications| S
 ```
@@ -152,7 +152,7 @@ graph LR
         C[Nginx]
         D[pgAdmin]
     end
-    
+
     subgraph "observability_network"
         A
         E[Prometheus]
@@ -170,6 +170,7 @@ graph LR
 - **observability_network**: Monitoring containers + Django (for metrics collection)
 
 Django is on both networks because it needs to:
+
 - Talk to PostgreSQL (app_network)
 - Expose metrics to Prometheus (observability_network)
 - Write logs that Promtail can read (observability_network)
@@ -252,6 +253,7 @@ Django is on both networks because it needs to:
 ### What is Prometheus?
 
 **Prometheus** is a metrics collection system that:
+
 - **Pulls** metrics from targets (your Django app)
 - Stores them in a time-series database
 - Evaluates alert rules
@@ -260,6 +262,7 @@ Django is on both networks because it needs to:
 ### What is Loki?
 
 **Loki** is a log aggregation system that:
+
 - **Receives** logs via HTTP push
 - Indexes only metadata (labels), not full text
 - Stores compressed log data
@@ -268,6 +271,7 @@ Django is on both networks because it needs to:
 ### What is Promtail?
 
 **Promtail** is a log shipping agent that:
+
 - **Tails** log files (reads new lines)
 - Parses JSON log format
 - Extracts labels
@@ -276,6 +280,7 @@ Django is on both networks because it needs to:
 ### What is Grafana?
 
 **Grafana** is a visualization platform that:
+
 - Connects to Prometheus (metrics)
 - Connects to Loki (logs)
 - Creates dashboards and graphs

@@ -1,0 +1,48 @@
+repos:
+  # General hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        exclude: ^mkdocs\.yml$
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: debug-statements
+        language_version: python3
+      - id: no-commit-to-branch
+        args: ['--branch', 'development', '--branch', 'staging', '--branch', 'production']
+
+  # Python linting & formatting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.2
+    hooks:
+      - id: ruff
+        name: ruff
+        entry: ruff check --extend-select I --fix
+        files: ^django_app/.*\.py$
+      - id: ruff-format
+        name: ruff-format
+        entry: ruff format
+        language: python
+        files: ^django_app/.*\.py$
+
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.44.0
+    hooks:
+      - id: markdownlint
+        files: ^docs/.*\.md$
+        args: ['--fix', '--config', '.markdownlint.json']
+
+  # MkDocs build validation
+  - repo: local
+    hooks:
+      - id: mkdocs-build
+        name: mkdocs-build
+        entry: mkdocs build --strict
+        language: system
+        pass_filenames: false
+        always_run: true
