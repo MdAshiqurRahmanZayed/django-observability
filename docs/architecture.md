@@ -12,6 +12,12 @@
 
 Here's the complete architecture of the observability stack:
 
+### Architecture Diagram
+
+![Application Metrics](assets/application-metrics-mermaid.svg)
+
+### Mermaid Code
+
 ```mermaid
 graph TB
     subgraph "User Layer"

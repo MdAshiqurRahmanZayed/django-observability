@@ -110,7 +110,7 @@ docker compose -f django_app/docker-compose.yml start obs-django
 Edit `django_app/.env`:
 
 ```bash
-SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+SLACK_WEBHOOK_URL=See https://api.slack.com/apps to get your webhook URL
 ```
 
 ### Step 3: Restart Alertmanager

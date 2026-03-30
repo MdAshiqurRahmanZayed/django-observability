@@ -15,7 +15,7 @@ cd django-observability
 cp django_app/.env.example django_app/.env
 
 # Start Everything
-docker compose -f django_app/docker-compose.yml up -d
+docker compose -f django_app/docker-compose.yml up -d --build
 ```
 
 ---
@@ -300,7 +300,7 @@ SECRET_KEY=<random-secret-key>
 ALLOWED_HOSTS=your-domain.com
 
 # Slack (real webhook)
-SLACK_WEBHOOK_URL=https://hooks.slack.com/services/REAL/WEBHOOK/URL
+SLACK_WEBHOOK_URL=See https://api.slack.com/apps to get your webhook URL
 ```
 
 ### Resource Limits

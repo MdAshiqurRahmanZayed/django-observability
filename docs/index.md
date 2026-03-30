@@ -64,7 +64,7 @@ cd django-observability
 cp django_app/.env.example django_app/.env
 
 # 3. Start everything
-docker compose -f django_app/docker-compose.yml up -d
+docker compose -f django_app/docker-compose.yml up -d --build
 ```
 
 ### Access Your Stack
@@ -112,30 +112,46 @@ Follow these steps in order:
 
 ## 🏗️ Architecture at a Glance
 
+### Architecture Diagram
+
+![Application Metrics](assets/application-metrics-mermaid.svg)
+
+### Mermaid Code
+
 ```mermaid
 graph TB
-    subgraph "Your Application"
-        A[Nginx] --> B[Django]
-        B --> C[PostgreSQL]
+    subgraph "Application"
+        U[Browser] --> N[Nginx :80]
+        N --> D[Django :9000]
+        D --> DB[(PostgreSQL)]
     end
 
     subgraph "Metrics"
-        B --> D[Prometheus]
-        D --> E[Alertmanager]
+        D -->|/metrics| P[Prometheus :9090]
+        NE[Node Exporter] --> P
+        P -->|alerts| AM[Alertmanager :9093]
+        AM -->|notify| S[Slack]
     end
 
     subgraph "Logs"
-        B --> F[Promtail]
-        F --> G[Loki]
+        D -->|writes| PT[Promtail]
+        PT -->|push| L[Loki :3100]
     end
 
     subgraph "Visualization"
-        D --> H[Grafana]
-        G --> H
+        P --> G[Grafana :3000]
+        L --> G
     end
-
-    E --> I[Slack]
 ```
+
+### Data Flow
+
+| Layer | Component | Flow |
+|-------|-----------|------|
+| **Application** | Browser → Nginx → Django → PostgreSQL | HTTP requests |
+| **Metrics** | Django → Prometheus → Alertmanager → Slack | /metrics scrape |
+| **Logs** | Django → Promtail → Loki | JSON log push |
+| **Visualization** | Prometheus + Loki → Grafana | Dashboards |
 
 ---
 

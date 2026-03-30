@@ -120,7 +120,7 @@ GF_ADMIN_PASSWORD=admin  # Grafana admin password
 # ┌──────────────────────────────────────────────┐
 # │          SLACK ALERTS (Optional)             │
 # └──────────────────────────────────────────────┘
-# SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+# SLACK_WEBHOOK_URL=See https://api.slack.com/apps to get your webhook URL
 ```
 
 ??? info "What each setting does"
@@ -143,7 +143,7 @@ GF_ADMIN_PASSWORD=admin  # Grafana admin password
 ### Start All Services
 
 ```bash
-docker compose -f django_app/docker-compose.yml up -d
+docker compose -f django_app/docker-compose.yml up -d --build
 ```
 
 This command:
