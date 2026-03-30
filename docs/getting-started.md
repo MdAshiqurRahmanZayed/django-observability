@@ -57,17 +57,42 @@ DB_PORT=5432             # Database port
 GF_ADMIN_USER=admin      # Grafana admin username
 GF_ADMIN_PASSWORD=admin  # Grafana admin password (change this!)
 
-# Slack Alerts (optional)
-SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+# Slack Alerts (optional - leave empty to disable)
+SLACK_WEBHOOK_URL=
 
-# Error Tracking (optional)
-SENTRY_DSN=your-sentry-secret-key-here
+# Sentry (optional - leave empty to disable)
+SENTRY_DSN=
 ```
+
+??? info "How to get Slack Webhook URL"
+
+    1. Go to https://api.slack.com/apps
+    2. Click **Create New App** → **From scratch**
+    3. Name it (e.g., "Django Alerts") and select workspace
+    4. Go to **Incoming Webhooks** → Toggle **On**
+    5. Click **Add New Webhook to Workspace**
+    6. Select channel (e.g., #alerts)
+    7. Copy the webhook URL
+
+    **Format:** `See https://api.slack.com/apps to get your webhook URL`
+
+??? info "How to get Sentry DSN"
+
+    1. Go to https://sentry.io (create account if needed)
+    2. Click **Create Project** → Select **Django**
+    3. Copy the DSN from the setup page
+    4. Or go to **Settings** → **Projects** → **Your Project** → **Client Keys (DSN)**
+
+    **Format:** `https://<key>@o<org>.ingest.sentry.io/<project>`
+
+!!! warning "Leave empty to disable"
+
+    If you don't need Slack alerts or Sentry error tracking, leave these values empty. Invalid values will cause errors.
 
 ### Step 3: Start All Services
 
 ```bash
-docker compose -f django_app/docker-compose.yml up -d
+docker compose -f django_app/docker-compose.yml up -d --build
 ```
 
 This starts **10 containers**:

@@ -21,7 +21,7 @@ cd django-observability
 cp django_app/.env.example django_app/.env
 
 # Run
-docker compose -f django_app/docker-compose.yml up -d
+docker compose -f django_app/docker-compose.yml up -d --build
 ```
 
 ---
@@ -41,13 +41,38 @@ docker compose -f django_app/docker-compose.yml up -d
 
 ## Architecture
 
-```
-Browser → Nginx → Django → PostgreSQL
-              ↓
-         Prometheus → Alertmanager → Slack
-              ↓
-         Grafana ← Loki ← Promtail
-```
+![Application Metrics](docs/assets/application-metrics-mermaid.svg)
+
+---
+
+## Configuration
+
+### Slack Webhook (Optional)
+
+Required for alert notifications. Leave empty to disable alerts.
+
+**How to get:**
+1. Go to https://api.slack.com/apps
+2. Click **Create New App** → **From scratch**
+3. Name it (e.g., "Django Alerts") and select workspace
+4. Go to **Incoming Webhooks** → Toggle **On**
+5. Click **Add New Webhook to Workspace**
+6. Select channel (e.g., #alerts)
+7. Copy the webhook URL
+
+**Format:** `See https://api.slack.com/apps to get your webhook URL`
+
+### Sentry DSN (Optional)
+
+Required for error tracking. Leave empty to disable error tracking.
+
+**How to get:**
+1. Go to https://sentry.io (create account if needed)
+2. Click **Create Project** → Select **Django**
+3. Copy the DSN from the setup page
+4. Or go to **Settings** → **Projects** → **Your Project** → **Client Keys (DSN)**
+
+**Format:** `https://<key>@o<org>.ingest.sentry.io/<project>`
 
 ---
 
@@ -66,8 +91,8 @@ Browser → Nginx → Django → PostgreSQL
 ## Commands
 
 ```bash
-# Start
-docker compose -f django_app/docker-compose.yml up -d
+# Start (with rebuild)
+docker compose -f django_app/docker-compose.yml up -d --build
 
 # Stop
 docker compose -f django_app/docker-compose.yml down

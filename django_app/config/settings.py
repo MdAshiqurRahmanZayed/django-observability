@@ -146,11 +146,12 @@ LOGGING = {
         },
     },
 }
-
-sentry_sdk.init(
-    dsn=os.environ.get("SENTRY_DSN", ""),
-    traces_sample_rate=1.0,
-    profiles_sample_rate=1.0,
-    send_default_pii=True,
-    environment=os.environ.get("DJANGO_ENV", "development"),
-)
+sentry_dsn = config("SENTRY_DSN", default="")
+if sentry_dsn:
+    sentry_sdk.init(
+        dsn=os.environ.get("SENTRY_DSN", ""),
+        traces_sample_rate=1.0,
+        profiles_sample_rate=1.0,
+        send_default_pii=True,
+        environment=os.environ.get("DJANGO_ENV", "development"),
+    )

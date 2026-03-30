@@ -32,7 +32,7 @@ cp django_app/.env.example django_app/.env
 ### Step 3: Start Everything
 
 ```bash
-docker compose -f django_app/docker-compose.yml up -d
+docker compose -f django_app/docker-compose.yml up -d --build
 ```
 
 ???+ success "Expected Output"
