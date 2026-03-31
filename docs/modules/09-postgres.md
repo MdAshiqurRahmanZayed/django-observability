@@ -59,48 +59,50 @@ PostgreSQL is a powerful, open-source object-relational database system with ove
 ### docker-compose.yml
 
 ```yaml
+# PostgreSQL Database
 obs-postgres:
-  image: postgres:16-alpine
+  image: postgres:16-alpine             # PostgreSQL 16 on Alpine (smaller image)
   container_name: obs-postgres
   restart: unless-stopped
   ports:
-    - "5439:5432"
+    - "5439:5432"                       # Expose on host port 5439
   environment:
-    POSTGRES_DB:       ${DB_NAME}
-    POSTGRES_USER:     ${DB_USER}
-    POSTGRES_PASSWORD: ${DB_PASSWORD}
+    POSTGRES_DB:       ${DB_NAME}       # Database name
+    POSTGRES_USER:     ${DB_USER}       # Database username
+    POSTGRES_PASSWORD: ${DB_PASSWORD}   # Database password
   volumes:
-    - postgres_data:/var/lib/postgresql/data
+    - postgres_data:/var/lib/postgresql/data  # Persistent database storage
   healthcheck:
     test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-    interval: 10s
-    timeout: 5s
-    retries: 5
-    start_period: 10s
+    interval: 10s                       # Check every 10 seconds
+    timeout: 5s                         # Wait 5 seconds for response
+    retries: 5                          # Try 5 times before failing
+    start_period: 10s                   # Wait 10s before first check
   networks:
-    - app_network
+    - app_network                       # Django can connect here
 ```
 
 ### pgAdmin Service
 
 ```yaml
+# pgAdmin Web Interface
 obs-pgadmin:
-  image: dpage/pgadmin4:latest
+  image: dpage/pgadmin4:latest          # pgAdmin on Alpine
   container_name: obs-pgadmin
   restart: unless-stopped
   ports:
-    - "5050:80"
+    - "5050:80"                         # pgAdmin UI port
   env_file:
-    - .env
+    - .env                              # Load environment variables
   environment:
     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@admin.com}
     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
   volumes:
-    - pgadmin_data:/var/lib/pgadmin
+    - pgadmin_data:/var/lib/pgadmin     # pgAdmin configuration storage
   depends_on:
-    - obs-postgres
+    - obs-postgres                      # PostgreSQL must be ready
   networks:
-    - app_network
+    - app_network                       # Can connect to PostgreSQL
 ```
 
 ## Network Access

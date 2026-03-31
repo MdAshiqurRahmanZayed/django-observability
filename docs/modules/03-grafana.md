@@ -74,21 +74,59 @@ obs-grafana:
     - observability_network
 ```
 
-### datasources.yml (provisioned automatically)
+## Configuration
+
+### datasources.yml
+
+**Location:** `grafana/provisioning/datasources/datasources.yml`
+
+The Grafana datasource configuration defines where Grafana gets its data from.
 
 ```yaml
+# =============================================================================
+# API VERSION
+# =============================================================================
 apiVersion: 1
 
-datasources:
-  - name: Prometheus
-    type: prometheus
-    url: http://obs-prometheus:9090
-    isDefault: true
+# =============================================================================
+# DELETE DATASOURCES
+# =============================================================================
+deleteDatasources:
+  - name: Prometheus                      # Delete old Prometheus datasource
+    orgId: 1
+  - name: Loki                            # Delete old Loki datasource
+    orgId: 1
 
+# =============================================================================
+# DATASOURCES
+# =============================================================================
+datasources:
+  # Prometheus (for metrics)
+  - name: Prometheus
+    type: prometheus                       # Datasource type
+    uid: prometheus                        # Unique identifier
+    orgId: 1
+    access: proxy                          # Grafana queries Prometheus
+    url: http://obs-prometheus:9090       # Prometheus URL
+    isDefault: true                        # Default datasource
+    editable: false
+    version: 1
+
+  # Loki (for logs)
   - name: Loki
     type: loki
-    url: http://obs-loki:3100
+    uid: loki
+    orgId: 1
+    access: proxy
+    url: http://obs-loki:3100             # Loki URL
+    isDefault: false
+    editable: false
+    version: 1
+    jsonData:
+      maxLines: 1000                       # Max lines to display
 ```
+
+See [grafana/provisioning/datasources/datasources.yml](https://github.com/MdAshiqurRahmanZayed/django-observability/blob/main/grafana/provisioning/datasources/datasources.yml) for full configuration with comments.
 
 ## Network Access
 

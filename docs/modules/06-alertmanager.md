@@ -80,38 +80,57 @@ obs-alertmanager:
     - observability_network
 ```
 
+## Configuration
+
 ### alertmanager.yml
 
-```yaml
-global:
-  resolve_timeout: 5m
-  slack_api_url: "SLACK_WEBHOOK_URL_PLACEHOLDER"
+**Location:** `alertmanager/alertmanager.yml`
 
+The Alertmanager configuration defines:
+- Global settings (timeouts, Slack webhook)
+- Routing rules (which alerts go where)
+- Receivers (notification targets like Slack channels)
+- Inhibit rules (suppress lower severity alerts)
+
+```yaml
+# =============================================================================
+# GLOBAL SETTINGS
+# =============================================================================
+global:
+  resolve_timeout: 5m                    # Wait 5 minutes before marking resolved
+  slack_api_url: "SLACK_WEBHOOK_URL_PLACEHOLDER"  # Replaced at runtime
+
+# =============================================================================
+# ROUTING
+# =============================================================================
 route:
-  group_by: ["alertname", "category"]
-  group_wait: 30s
-  group_interval: 5m
-  repeat_interval: 12h
-  receiver: "slack-default"
-  routes:
+  group_by: ["alertname", "category"]   # Group alerts by name and category
+  group_wait: 30s                        # Wait 30s before sending first alert
+  group_interval: 5m                     # Wait 5m between sending groups
+  repeat_interval: 12h                   # Repeat unresolved alert every 12h
+  receiver: "slack-default"              # Default receiver
+  routes:                                # Specific routing rules
     - match:
-        category: db
+        category: db                     # Database alerts → #alerts-db
       receiver: "slack-db"
     - match:
-        category: http
+        category: http                   # HTTP alerts → #alerts-http
       receiver: "slack-http"
     - match:
-        category: latency
+        category: latency                # Latency alerts → #alerts-latency
       receiver: "slack-latency"
     - match:
-        category: infrastructure
+        category: infrastructure         # Infrastructure alerts → #alerts-infra
       receiver: "slack-infra"
 
+# =============================================================================
+# RECEIVERS
+# =============================================================================
 receivers:
   - name: "slack-default"
     slack_configs:
       - channel: "#alerts"
-        send_resolved: true
+        send_resolved: true              # Send when alert resolves
   - name: "slack-db"
     slack_configs:
       - channel: "#alerts-db"
@@ -128,7 +147,19 @@ receivers:
     slack_configs:
       - channel: "#alerts-infra"
         send_resolved: true
+
+# =============================================================================
+# INHIBIT RULES
+# =============================================================================
+inhibit_rules:
+  - source_match:
+      severity: "critical"               # If critical alert fires
+    target_match:
+      severity: "warning"                # Suppress warning
+    equal: ["alertname"]                 # Only if same alertname
 ```
+
+See [alertmanager/alertmanager.yml](https://github.com/MdAshiqurRahmanZayed/django-observability/blob/main/alertmanager/alertmanager.yml) for full configuration with comments.
 
 ## Network Access
 

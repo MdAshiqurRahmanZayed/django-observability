@@ -1,31 +1,59 @@
+# =============================================================================
+# PROMETHEUS ALERT RULES
+# =============================================================================
+# Alert rules define when Prometheus should trigger alerts.
+# Each rule specifies a condition (expr) and duration (for) before alerting.
+#
+# Rules are organized by category:
+# - db_alerts: Database related alerts
+# - http_alerts: HTTP/URL related alerts
+# - latency_alerts: Response time alerts
+# - infra_alerts: Infrastructure (CPU, memory, disk) alerts
+#
+# Official Documentation: https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/
+# =============================================================================
+
 groups:
 
-  # ─── DB Alerts ───────────────────────────────────────────────
+  # ===========================================================================
+  # DATABASE ALERTS
+  # ===========================================================================
+  # Alerts related to database performance and errors
+  # ===========================================================================
   - name: db_alerts
     rules:
 
+      # Alert: High DB Error Rate
+      # Fires when database errors exceed 0.1/second for 2 minutes
+      # This indicates serious database issues
       - alert: DBHighErrorRate
-        expr: rate(django_db_errors_total[5m]) > 0.1
-        for: 2m
+        expr: rate(django_db_errors_total[5m]) > 0.1  # Error rate > 0.1/s
+        for: 2m                                         # Sustain for 2 minutes
         labels:
-          severity: critical
-          category: db
+          severity: critical                             # Critical alert
+          category: db                                   # Routes to #alerts-db
         annotations:
           summary: "High DB error rate"
           description: "DB errors > 0.1/s for 2 minutes. Current: {{ $value | printf \"%.2f\" }}/s"
 
+      # Alert: Slow DB Queries
+      # Fires when 95th percentile query duration > 1 second
+      # This indicates slow database performance
       - alert: DBSlowQueries
-        expr: histogram_quantile(0.95, rate(django_db_query_duration_seconds_bucket[5m])) > 1
-        for: 5m
+        expr: histogram_quantile(0.95, rate(django_db_query_duration_seconds_bucket[5m])) > 1  # p95 > 1s
+        for: 5m                                         # Sustain for 5 minutes
         labels:
-          severity: warning
+          severity: warning                              # Warning alert
           category: db
         annotations:
           summary: "Slow DB queries detected"
           description: "95th percentile DB query duration > 1s. Current: {{ $value | printf \"%.2f\" }}s"
 
+      # Alert: High DB Query Rate
+      # Fires when database queries exceed 100/second
+      # This may indicate unoptimized queries
       - alert: DBHighQueryRate
-        expr: rate(django_db_execute_total[5m]) > 100
+        expr: rate(django_db_execute_total[5m]) > 100   # Query rate > 100/s
         for: 5m
         labels:
           severity: warning
@@ -34,13 +62,20 @@ groups:
           summary: "High DB query rate"
           description: "DB queries > 100/s for 5 minutes. Current: {{ $value | printf \"%.0f\" }}/s"
 
-  # ─── HTTP / URL Alerts ───────────────────────────────────────
+  # ===========================================================================
+  # HTTP / URL ALERTS
+  # ===========================================================================
+  # Alerts related to HTTP requests and responses
+  # ===========================================================================
   - name: http_alerts
     rules:
 
+      # Alert: Django Down
+      # Fires when Django is unreachable for more than 10 seconds
+      # This is the most critical alert - application is not responding
       - alert: DjangoDown
-        expr: up{job="django"} == 0
-        for: 10s
+        expr: up{job="django"} == 0                      # Target is down
+        for: 10s                                         # Sustain for 10 seconds
         labels:
           severity: critical
           category: http
@@ -48,9 +83,12 @@ groups:
           summary: "Django is DOWN"
           description: "Django app has been unreachable for more than 10 seconds"
 
+      # Alert: Django 5xx Server Error
+      # Fires immediately when any 5xx error occurs
+      # This indicates server-side errors
       - alert: Django5xxError
         expr: sum(increase(django_http_responses_total_by_status_total{status=~"5.."}[1m])) > 0
-        for: 0m
+        for: 0m                                          # Fire immediately
         labels:
           severity: critical
           category: http
@@ -58,6 +96,9 @@ groups:
           summary: "Django 5xx server error"
           description: "A server error (5xx) was detected. Count in last 1m: {{ $value | printf \"%.0f\" }}"
 
+      # Alert: Django 4xx Client Error
+      # Fires immediately when any 4xx error occurs
+      # This indicates client-side errors (bad requests, not found, etc.)
       - alert: Django4xxError
         expr: sum(increase(django_http_responses_total_by_status_total{status=~"4.."}[1m])) > 0
         for: 0m
@@ -68,6 +109,9 @@ groups:
           summary: "Django 4xx client error"
           description: "A client error (4xx) was detected. Count in last 1m: {{ $value | printf \"%.0f\" }}"
 
+      # Alert: High 5xx Error Rate
+      # Fires when 5xx errors exceed 0.5/second for 2 minutes
+      # This indicates consistent server problems
       - alert: HighHTTP5xxRate
         expr: sum(rate(django_http_responses_total_by_status_total{status=~"5.."}[5m])) > 0.5
         for: 2m
@@ -78,6 +122,9 @@ groups:
           summary: "High 5xx error rate"
           description: "5xx errors > 0.5/s for 2 minutes. Current: {{ $value | printf \"%.2f\" }}/s"
 
+      # Alert: High 4xx Error Rate
+      # Fires when 4xx errors exceed 2/second for 5 minutes
+      # This may indicate misconfigured clients
       - alert: HighHTTP4xxRate
         expr: sum(rate(django_http_responses_total_by_status_total{status=~"4.."}[5m])) > 2
         for: 5m
@@ -88,6 +135,9 @@ groups:
           summary: "High 4xx error rate"
           description: "4xx errors > 2/s for 5 minutes. Current: {{ $value | printf \"%.2f\" }}/s"
 
+      # Alert: Endpoint High Error Rate
+      # Fires when specific endpoint has high error rate
+      # Helps identify which endpoint is causing problems
       - alert: EndpointHighErrorRate
         expr: |
           sum by (view) (
@@ -101,10 +151,17 @@ groups:
           summary: "High error rate on endpoint {{ $labels.view }}"
           description: "Endpoint {{ $labels.view }} has error rate > 0.3/s. Current: {{ $value | printf \"%.2f\" }}/s"
 
-  # ─── Latency Alerts ──────────────────────────────────────────
+  # ===========================================================================
+  # LATENCY ALERTS
+  # ===========================================================================
+  # Alerts related to response time performance
+  # ===========================================================================
   - name: latency_alerts
     rules:
 
+      # Alert: High P95 Latency
+      # Fires when 95th percentile response time > 2 seconds
+      # Most users (95%) experience slow responses
       - alert: HighP95Latency
         expr: histogram_quantile(0.95, rate(django_http_requests_latency_seconds_by_view_method_bucket[5m])) > 2
         for: 5m
@@ -115,6 +172,9 @@ groups:
           summary: "High p95 response latency"
           description: "p95 latency > 2s for 5 minutes. Current: {{ $value | printf \"%.2f\" }}s"
 
+      # Alert: High P99 Latency
+      # Fires when 99th percentile response time > 5 seconds
+      # Some users (1%) experience very slow responses
       - alert: HighP99Latency
         expr: histogram_quantile(0.99, rate(django_http_requests_latency_seconds_by_view_method_bucket[5m])) > 5
         for: 3m
@@ -125,6 +185,8 @@ groups:
           summary: "Critical p99 response latency"
           description: "p99 latency > 5s for 3 minutes. Current: {{ $value | printf \"%.2f\" }}s"
 
+      # Alert: Endpoint Slow Response
+      # Fires when specific endpoint has slow responses
       - alert: EndpointSlowResponse
         expr: |
           histogram_quantile(0.95,
@@ -140,10 +202,16 @@ groups:
           summary: "Slow endpoint: {{ $labels.view }}"
           description: "Endpoint {{ $labels.view }} p95 > 3s. Current: {{ $value | printf \"%.2f\" }}s"
 
-  # ─── Infrastructure Alerts ───────────────────────────────────
+  # ===========================================================================
+  # INFRASTRUCTURE ALERTS
+  # ===========================================================================
+  # Alerts related to host system resources (CPU, memory, disk)
+  # ===========================================================================
   - name: infra_alerts
     rules:
 
+      # Alert: High CPU Usage
+      # Fires when CPU usage > 85% for 5 minutes
       - alert: HighCPUUsage
         expr: 100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
         for: 5m
@@ -154,6 +222,8 @@ groups:
           summary: "High CPU usage"
           description: "Host CPU usage > 85% for 5 minutes. Current: {{ $value | printf \"%.1f\" }}%"
 
+      # Alert: Critical CPU Usage
+      # Fires when CPU usage > 95% for 2 minutes
       - alert: CriticalCPUUsage
         expr: 100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
         for: 2m
@@ -164,6 +234,8 @@ groups:
           summary: "Critical CPU usage"
           description: "Host CPU usage > 95% for 2 minutes. Current: {{ $value | printf \"%.1f\" }}%"
 
+      # Alert: High Memory Usage
+      # Fires when memory usage > 85% for 5 minutes
       - alert: HighMemoryUsage
         expr: 100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 85
         for: 5m
@@ -174,6 +246,8 @@ groups:
           summary: "High memory usage"
           description: "Host memory usage > 85% for 5 minutes. Current: {{ $value | printf \"%.1f\" }}%"
 
+      # Alert: Critical Memory Usage
+      # Fires when memory usage > 95% for 2 minutes
       - alert: CriticalMemoryUsage
         expr: 100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 95
         for: 2m
@@ -184,6 +258,8 @@ groups:
           summary: "Critical memory usage"
           description: "Host memory usage > 95% for 2 minutes. Current: {{ $value | printf \"%.1f\" }}%"
 
+      # Alert: High Disk Usage
+      # Fires when disk usage > 85%
       - alert: HighDiskUsage
         expr: 100 - (node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay"} * 100) > 85
         for: 5m
@@ -194,8 +270,10 @@ groups:
           summary: "High disk usage"
           description: "Disk usage > 85%. Current: {{ $value | printf \"%.1f\" }}%"
 
+      # Alert: Django High Memory
+      # Fires when Django process uses > 500MB memory
       - alert: DjangoHighMemory
-        expr: process_resident_memory_bytes{job="django"} > 500 * 1024 * 1024
+        expr: process_resident_memory_bytes{job="django"} > 500 * 1024 * 1024  # 500MB
         for: 5m
         labels:
           severity: warning

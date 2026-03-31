@@ -85,43 +85,94 @@ obs-prometheus:
     - observability_network
 ```
 
+## Configuration
+
 ### prometheus.yml
 
-```yaml
-global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
+The Prometheus configuration defines scrape targets, alerting rules, and global settings.
 
+**Location:** `prometheus/prometheus.yml`
+
+```yaml
+# =============================================================================
+# GLOBAL SETTINGS
+# =============================================================================
+global:
+  scrape_interval: 15s       # How often to scrape targets (default: 15 seconds)
+  evaluation_interval: 15s   # How often to evaluate alert rules (default: 15 seconds)
+
+# =============================================================================
+# ALERTMANAGER
+# =============================================================================
 alerting:
   alertmanagers:
     - static_configs:
-        - targets: ["obs-alertmanager:9093"]
+        - targets: ["obs-alertmanager:9093"]  # Alertmanager container address
 
+# =============================================================================
+# ALERT RULES
+# =============================================================================
 rule_files:
-  - /etc/prometheus/rules/*.yml
+  - /etc/prometheus/rules/*.yml  # Load all YAML files in rules directory
 
+# =============================================================================
+# SCRAPE CONFIGURATIONS
+# =============================================================================
 scrape_configs:
+  # Prometheus itself (self-monitoring)
   - job_name: "prometheus"
     static_configs:
       - targets: ["localhost:9090"]
 
+  # Django application metrics
   - job_name: "django"
     static_configs:
       - targets: ["obs-django:9000"]
     metrics_path: /metrics
 
+  # Node Exporter (host metrics)
   - job_name: "node"
     static_configs:
       - targets: ["obs-node-exporter:9100"]
 
+  # Loki (log system metrics)
   - job_name: "loki"
     static_configs:
       - targets: ["obs-loki:3100"]
     metrics_path: /metrics
 
+  # Grafana (UI metrics)
   - job_name: "grafana"
     static_configs:
       - targets: ["obs-grafana:3000"]
+    metrics_path: /metrics
+```
+
+See [prometheus/prometheus.yml](https://github.com/MdAshiqurRahmanZayed/django-observability/blob/main/prometheus/prometheus.yml) for full configuration with comments.
+- /etc/prometheus/rules/*.yml
+
+scrape_configs:
+- job_name: "prometheus"
+    static_configs:
+  - targets: ["localhost:9090"]
+
+- job_name: "django"
+    static_configs:
+  - targets: ["obs-django:9000"]
+    metrics_path: /metrics
+
+- job_name: "node"
+    static_configs:
+  - targets: ["obs-node-exporter:9100"]
+
+- job_name: "loki"
+    static_configs:
+  - targets: ["obs-loki:3100"]
+    metrics_path: /metrics
+
+- job_name: "grafana"
+    static_configs:
+  - targets: ["obs-grafana:3000"]
     metrics_path: /metrics
 ```
 

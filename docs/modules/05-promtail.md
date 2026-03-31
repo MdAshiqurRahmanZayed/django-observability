@@ -69,41 +69,67 @@ obs-promtail:
     - observability_network
 ```
 
+## Configuration
+
 ### promtail-config.yml
 
+**Location:** `promtail/promtail-config.yml`
+
+The Promtail configuration defines:
+- Server settings (port)
+- Position tracking (remembers where it left off)
+- Where to send logs (Loki endpoint)
+- What files to watch and how to parse them
+
 ```yaml
+# =============================================================================
+# SERVER SETTINGS
+# =============================================================================
 server:
-  http_listen_port: 9080
-  grpc_listen_port: 0
+  http_listen_port: 9080                 # Port for metrics endpoint
+  grpc_listen_port: 0                    # Disable gRPC (not needed)
 
+# =============================================================================
+# POSITION TRACKING
+# =============================================================================
 positions:
-  filename: /tmp/positions.yaml
+  filename: /tmp/positions.yaml          # File to store read positions
 
+# =============================================================================
+# CLIENT CONFIGURATION
+# =============================================================================
 clients:
-  - url: http://obs-loki:3100/loki/api/v1/push
+  - url: http://obs-loki:3100/loki/api/v1/push  # Loki push endpoint
 
+# =============================================================================
+# SCRAPE CONFIGURATIONS
+# =============================================================================
 scrape_configs:
 
-  # Django app logs (JSON format)
-  - job_name: django
+  # ===========================================================================
+  # JOB 1: Django Application Logs (JSON Format)
+  # ===========================================================================
+  - job_name: django                     # Job name
     static_configs:
       - targets:
-          - localhost
+          - localhost                    # Required but ignored for file watching
         labels:
-          app: django
-          env: dev
-          __path__: /var/log/django/django.log
+          app: django                    # Label: app=django
+          env: dev                       # Label: env=dev
+          __path__: /var/log/django/django.log  # File to watch
     pipeline_stages:
-      - json:
+      - json:                            # Parse as JSON
           expressions:
-            level: levelname
-            logger: name
-            message: message
-      - labels:
+            level: levelname             # Extract "levelname" → "level" label
+            logger: name                 # Extract "name" → "logger" label
+            message: message             # Extract "message" → log line
+      - labels:                          # Convert to Loki labels
           level:
           logger:
 
-  # Gunicorn access logs
+  # ===========================================================================
+  # JOB 2: Gunicorn Access Logs
+  # ===========================================================================
   - job_name: gunicorn_access
     static_configs:
       - targets:
@@ -114,7 +140,9 @@ scrape_configs:
           env: dev
           __path__: /var/log/django/access.log
 
-  # Gunicorn error logs
+  # ===========================================================================
+  # JOB 3: Gunicorn Error Logs
+  # ===========================================================================
   - job_name: gunicorn_error
     static_configs:
       - targets:
@@ -126,6 +154,8 @@ scrape_configs:
           env: dev
           __path__: /var/log/django/error.log
 ```
+
+See [promtail/promtail-config.yml](https://github.com/MdAshiqurRahmanZayed/django-observability/blob/main/promtail/promtail-config.yml) for full configuration with comments.
 
 ## Network Access
 

@@ -68,20 +68,21 @@ In this stack, Nginx:
 ### docker-compose.yml
 
 ```yaml
+# Nginx Reverse Proxy
 obs-nginx:
-  image: nginx:alpine
+  image: nginx:alpine                   # Nginx on Alpine Linux (small image)
   container_name: obs-nginx
   restart: unless-stopped
   ports:
-    - "80:80"
+    - "80:80"                           # HTTP port
   volumes:
-    - ./../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-    - static_volume:/app/staticfiles:ro
-    - media_volume:/app/mediafiles:ro
+    - ./../nginx/nginx.conf:/etc/nginx/nginx.conf:ro  # Config file (read-only)
+    - static_volume:/app/staticfiles:ro               # Django static files
+    - media_volume:/app/mediafiles:ro                 # User uploads
   depends_on:
-    - obs-django
+    - obs-django                        # Wait for Django to start
   networks:
-    - app_network
+    - app_network                       # Can proxy to Django
 ```
 
 ### nginx.conf

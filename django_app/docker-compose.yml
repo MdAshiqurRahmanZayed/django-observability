@@ -1,181 +1,295 @@
+# =============================================================================
+# DOCKER COMPOSE - Django Observability Stack
+# =============================================================================
+# This file defines all services, networks, and volumes for the observability
+# stack. Each service is explained with comments.
+#
+# Networks:
+#   - app_network: For application containers (Django, PostgreSQL, Nginx)
+#   - observability_network: For monitoring containers (Prometheus, Loki, etc.)
+# =============================================================================
+
 services:
 
+  # ===========================================================================
+  # DJANGO APPLICATION
+  # ===========================================================================
+  # The main Python Django web application
+  # - Serves HTTP requests via Gunicorn on port 9000
+  # - Exposes /metrics endpoint for Prometheus
+  # - Writes JSON logs to /app/logs/
+  # - Connected to both networks (app + observability)
+  # ===========================================================================
   obs-django:
     image: django-observability:latest
     container_name: obs-django
     build:
       context: .
       dockerfile: Dockerfile
-    restart: on-failure
+    restart: on-failure                # Restart if container crashes
     ports:
-      - "9000:9000"
+      - "9000:9000"                    # Expose Gunicorn port
     volumes:
-      - static_volume:/app/static
-      - media_volume:/app/mediafiles
-      - logs_volume:/app/logs
+      - static_volume:/app/static      # Django static files
+      - media_volume:/app/mediafiles   # User uploaded files
+      - logs_volume:/app/logs          # Application logs (shared with Promtail)
     env_file:
-      - .env
+      - .env                           # Load environment variables
     depends_on:
       obs-postgres:
-        condition: service_healthy
+        condition: service_healthy     # Wait for PostgreSQL to be ready
     networks:
-      - app_network
-      - observability_network
+      - app_network                    # Can talk to PostgreSQL
+      - observability_network          # Can expose metrics to Prometheus
 
+  # ===========================================================================
+  # POSTGRESQL DATABASE
+  # ===========================================================================
+  # Primary database for the Django application
+  # - Stores todo data and Django tables
+  # - Uses PostgreSQL 16 on Alpine Linux
+  # - Health check ensures database is ready before Django starts
+  # ===========================================================================
   obs-postgres:
-    image: postgres:16-alpine
+    image: postgres:16-alpine          # PostgreSQL 16 on Alpine (smaller image)
     container_name: obs-postgres
     restart: unless-stopped
     ports:
-      - "5439:5432"
+      - "5439:5432"                    # Expose on host port 5439
     environment:
-      POSTGRES_DB:       ${DB_NAME}
-      POSTGRES_USER:     ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB:       ${DB_NAME}        # Database name
+      POSTGRES_USER:     ${DB_USER}        # Database username
+      POSTGRES_PASSWORD: ${DB_PASSWORD}    # Database password
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data  # Persistent database storage
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+      interval: 10s                    # Check every 10 seconds
+      timeout: 5s                      # Wait 5 seconds for response
+      retries: 5                       # Try 5 times before failing
+      start_period: 10s                # Wait 10s before first check
     networks:
-      - app_network
+      - app_network                    # Django can connect here
 
+  # ===========================================================================
+  # NGINX REVERSE PROXY
+  # ===========================================================================
+  # Entry point for all HTTP requests
+  # - Serves static files directly (CSS, JS, images)
+  # - Proxies dynamic requests to Django
+  # - Listens on port 80 (HTTP)
+  # ===========================================================================
   obs-nginx:
-    image: nginx:alpine
+    image: nginx:alpine                # Nginx on Alpine Linux
     container_name: obs-nginx
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "80:80"                        # HTTP port
     volumes:
-      - ./../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./../django_app/site_static:/app/site_static:ro   # live source, edits reflected instantly
-      - static_volume:/app/static:ro                       # collectstatic output (admin)
-      - media_volume:/app/mediafiles:ro
+      - ./../nginx/nginx.conf:/etc/nginx/nginx.conf:ro           # Config file
+      - ./../django_app/site_static:/app/site_static:ro           # Live source files
+      - static_volume:/app/static:ro                               # Django collectstatic
+      - media_volume:/app/mediafiles:ro                            # User uploads
     depends_on:
-      - obs-django
+      - obs-django                     # Start after Django
     networks:
-      - app_network
+      - app_network                    # Can proxy to Django
 
+  # ===========================================================================
+  # PROMETHEUS (METRICS COLLECTION)
+  # ===========================================================================
+  # Collects metrics from all services by "scraping" their /metrics endpoints
+  # - Pulls metrics every 15 seconds (configurable)
+  # - Stores metrics in Time Series Database (TSDB)
+  # - Evaluates alert rules and sends to Alertmanager
+  # - UI available at http://localhost:9090
+  # ===========================================================================
   obs-prometheus:
     image: prom/prometheus:latest
     container_name: obs-prometheus
     restart: unless-stopped
     ports:
-      - "9090:9090"
+      - "9090:9090"                    # Prometheus UI port
     volumes:
-      - ./../prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./../prometheus/rules:/etc/prometheus/rules:ro
-      - prometheus_data:/prometheus
+      - ./../prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro  # Config
+      - ./../prometheus/rules:/etc/prometheus/rules:ro                    # Alert rules
+      - prometheus_data:/prometheus    # Metrics storage (TSDB)
     command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
-      - "--storage.tsdb.path=/prometheus"
-      - "--storage.tsdb.retention.time=15d"
-      - "--web.enable-lifecycle"
+      - "--config.file=/etc/prometheus/prometheus.yml"     # Config file path
+      - "--storage.tsdb.path=/prometheus"                  # Storage location
+      - "--storage.tsdb.retention.time=15d"                # Keep data for 15 days
+      - "--web.enable-lifecycle"                           # Allow config reload
     networks:
-      - observability_network
+      - observability_network          # Can scrape all monitoring services
 
+  # ===========================================================================
+  # ALERTMANAGER (ALERT ROUTING)
+  # ===========================================================================
+  # Receives alerts from Prometheus and routes them to Slack
+  # - Groups similar alerts to avoid spam
+  # - Routes by category to different Slack channels
+  # - Supports inhibition (suppress warning if critical is active)
+  # - UI available at http://localhost:9093
+  # ===========================================================================
   obs-alertmanager:
     image: prom/alertmanager:latest
     container_name: obs-alertmanager
     restart: unless-stopped
     ports:
-      - "9093:9093"
+      - "9093:9093"                    # Alertmanager UI port
     volumes:
       - ./../alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml.tmpl:ro
-      - alertmanager_data:/alertmanager
+      - alertmanager_data:/alertmanager  # Alert storage
     entrypoint: ["/bin/sh", "-c"]
+    # Replace SLACK_WEBHOOK_URL placeholder with actual value at runtime
     command:
       - "sed 's|SLACK_WEBHOOK_URL_PLACEHOLDER|'$$SLACK_WEBHOOK_URL'|g' /etc/alertmanager/alertmanager.yml.tmpl > /tmp/alertmanager.yml && /bin/alertmanager --config.file=/tmp/alertmanager.yml --storage.path=/alertmanager"
     environment:
-      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}  # From .env file
     networks:
-      - observability_network
+      - observability_network          # Prometheus can send alerts here
 
+  # ===========================================================================
+  # LOKI (LOG STORAGE)
+  # ===========================================================================
+  # Stores and indexes logs with labels (like Prometheus but for logs)
+  # - Receives logs from Promtail via HTTP push
+  # - Indexes by labels (app, level, env) not full text
+  # - Stores log data in compressed chunks
+  # - Retains logs for 30 days
+  # - UI available via Grafana (not direct UI)
+  # ===========================================================================
   obs-loki:
     image: grafana/loki:2.9.0
     container_name: obs-loki
     restart: unless-stopped
     ports:
-      - "3100:3100"
+      - "3100:3100"                    # Loki HTTP API port
     volumes:
-      - ./../loki/loki-config.yml:/etc/loki/local-config.yaml:ro
-      - loki_data:/loki
+      - ./../loki/loki-config.yml:/etc/loki/local-config.yaml:ro  # Config
+      - loki_data:/loki                # Log storage (chunks + index)
     command: -config.file=/etc/loki/local-config.yaml
     networks:
-      - observability_network
+      - observability_network          # Promtail and Grafana can connect
 
+  # ===========================================================================
+  # PROMTAIL (LOG SHIPPING)
+  # ===========================================================================
+  # Agent that reads log files and sends them to Loki
+  # - Tails log files continuously (like tail -f)
+  # - Parses JSON format and extracts labels
+  # - Pushes logs to Loki via HTTP POST
+  # - Tracks file position to avoid re-reading after restart
+  # ===========================================================================
   obs-promtail:
     image: grafana/promtail:2.9.0
     container_name: obs-promtail
     restart: unless-stopped
+    # No ports exposed - Promtail is internal only
     volumes:
-      - ./../promtail/promtail-config.yml:/etc/promtail/config.yml:ro
-      - logs_volume:/var/log/django:ro
+      - ./../promtail/promtail-config.yml:/etc/promtail/config.yml:ro  # Config
+      - logs_volume:/var/log/django:ro  # Read Django logs (shared volume)
     command: -config.file=/etc/promtail/config.yml
     depends_on:
-      - obs-loki
+      - obs-loki                       # Loki must be ready
     networks:
-      - observability_network
+      - observability_network          # Can push to Loki
 
+  # ===========================================================================
+  # GRAFANA (VISUALIZATION)
+  # ===========================================================================
+  # Creates dashboards from Prometheus metrics and Loki logs
+  # - Connects to Prometheus for metrics
+  # - Connects to Loki for logs
+  # - Provides Explore interface for ad-hoc queries
+  # - Supports alerting rules
+  # - UI available at http://localhost:3000 (admin/admin)
+  # ===========================================================================
   obs-grafana:
     image: grafana/grafana:latest
     container_name: obs-grafana
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3000:3000"                    # Grafana UI port
     environment:
-      GF_SECURITY_ADMIN_USER:     ${GF_ADMIN_USER:-admin}
-      GF_SECURITY_ADMIN_PASSWORD: ${GF_ADMIN_PASSWORD:-admin}
-      GF_PATHS_PROVISIONING:      /etc/grafana/provisioning
+      GF_SECURITY_ADMIN_USER:     ${GF_ADMIN_USER:-admin}     # Admin username
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_ADMIN_PASSWORD:-admin}  # Admin password
+      GF_PATHS_PROVISIONING:      /etc/grafana/provisioning    # Datasource config
     volumes:
-      - ./../grafana/provisioning:/etc/grafana/provisioning:ro
-      - grafana_data:/var/lib/grafana
+      - ./../grafana/provisioning:/etc/grafana/provisioning:ro  # Datasource configs
+      - grafana_data:/var/lib/grafana                           # Dashboard storage
     depends_on:
-      - obs-prometheus
-      - obs-loki
+      - obs-prometheus                 # Need Prometheus datasource
+      - obs-loki                       # Need Loki datasource
     networks:
-      - observability_network
+      - observability_network          # Can query Prometheus and Loki
 
+  # ===========================================================================
+  # NODE EXPORTER (HOST METRICS)
+  # ===========================================================================
+  # Collects host-level system metrics
+  # - CPU usage by mode (user, system, idle)
+  # - Memory usage (total, available)
+  # - Disk usage (filesystem)
+  # - Network traffic (bytes in/out)
+  # - Reads from /proc, /sys, / filesystem
+  # ===========================================================================
   obs-node-exporter:
     image: prom/node-exporter:latest
     container_name: obs-node-exporter
     restart: unless-stopped
-    pid: host
+    pid: host                          # Share host's PID namespace
     ports:
-      - "9100:9100"
+      - "9100:9100"                    # Node Exporter metrics port
     volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /:/rootfs:ro
+      - /proc:/host/proc:ro            # Read CPU, memory, processes
+      - /sys:/host/sys:ro              # Read system information
+      - /:/rootfs:ro                   # Read disk usage
     command:
-      - "--path.procfs=/host/proc"
-      - "--path.sysfs=/host/sys"
-      - "--path.rootfs=/rootfs"
+      - "--path.procfs=/host/proc"     # Where to find /proc
+      - "--path.sysfs=/host/sys"       # Where to find /sys
+      - "--path.rootfs=/rootfs"        # Where to find root filesystem
       - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
     networks:
-      - observability_network
+      - observability_network          # Prometheus can scrape here
 
+  # ===========================================================================
+  # PGADMIN (DATABASE ADMIN)
+  # ===========================================================================
+  # Web-based PostgreSQL administration tool
+  # - Browse database tables
+  # - Run SQL queries
+  # - Manage database users
+  # - UI available at http://localhost:5050
+  # ===========================================================================
   obs-pgadmin:
     image: dpage/pgadmin4:latest
     container_name: obs-pgadmin
     restart: unless-stopped
     ports:
-      - "5050:80"
+      - "5050:80"                      # pgAdmin UI port
     env_file:
-      - .env
+      - .env                           # Load environment variables
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@admin.com}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
     volumes:
-      - pgadmin_data:/var/lib/pgadmin
+      - pgadmin_data:/var/lib/pgadmin  # pgAdmin configuration storage
     depends_on:
-      - obs-postgres
+      - obs-postgres                   # PostgreSQL must be ready
     networks:
-      - app_network
+      - app_network                    # Can connect to PostgreSQL
 
+  # ===========================================================================
+  # MCP SERVER (AI INTEGRATION)
+  # ===========================================================================
+  # Model Context Protocol server for AI tools integration
+  # - Provides database CRUD operations
+  # - Provides Prometheus query interface
+  # - Provides Grafana dashboard access
+  # - Provides service health checks
+  # - Available at http://localhost:8000
+  # ===========================================================================
   obs-mcp:
     image: django-observability-mcp:latest
     container_name: obs-mcp
@@ -184,46 +298,60 @@ services:
       dockerfile: django_app/Dockerfile.mcp
     restart: on-failure
     ports:
-      - "8000:8000"
+      - "8000:8000"                    # MCP Server HTTP port
     volumes:
-      - logs_volume:/app/logs
+      - logs_volume:/app/logs          # Access to Django logs
     env_file:
-      - .env
+      - .env                           # Load environment variables
     environment:
-      MCP_TRANSPORT: http
-      MCP_HOST: 0.0.0.0
-      MCP_PORT: 8000
-      DB_HOST: obs-postgres
-      DB_PORT: 5432
-      PROMETHEUS_URL: http://obs-prometheus:9090
-      GRAFANA_URL: http://obs-grafana:3000
-      DJANGO_URL: http://obs-django:9000
+      MCP_TRANSPORT: http              # Use HTTP transport
+      MCP_HOST: 0.0.0.0               # Listen on all interfaces
+      MCP_PORT: 8000                   # MCP Server port
+      DB_HOST: obs-postgres            # PostgreSQL host
+      DB_PORT: 5432                    # PostgreSQL port
+      PROMETHEUS_URL: http://obs-prometheus:9090    # Prometheus URL
+      GRAFANA_URL: http://obs-grafana:3000          # Grafana URL
+      DJANGO_URL: http://obs-django:9000            # Django URL
     depends_on:
       obs-postgres:
-        condition: service_healthy
+        condition: service_healthy     # Wait for PostgreSQL
       obs-prometheus:
-        condition: service_started
+        condition: service_started     # Wait for Prometheus
       obs-grafana:
-        condition: service_started
+        condition: service_started     # Wait for Grafana
       obs-django:
-        condition: service_started
+        condition: service_started     # Wait for Django
     networks:
-      - app_network
-      - observability_network
+      - app_network                    # Can connect to PostgreSQL
+      - observability_network          # Can connect to Prometheus, Loki, Grafana
 
+# =============================================================================
+# VOLUMES
+# =============================================================================
+# Persistent storage for each service
+# - Data survives container restarts
+# - Use 'docker compose down -v' to delete all volumes
+# =============================================================================
 volumes:
-  postgres_data:
-  static_volume:
-  media_volume:
-  logs_volume:
-  prometheus_data:
-  alertmanager_data:
-  loki_data:
-  grafana_data:
-  pgadmin_data:
+  postgres_data:       # PostgreSQL database files
+  static_volume:       # Django static files (collectstatic output)
+  media_volume:        # User uploaded files
+  logs_volume:         # Application logs (shared: Django writes, Promtail reads)
+  prometheus_data:     # Prometheus metrics (TSDB)
+  alertmanager_data:   # Alertmanager state
+  loki_data:           # Loki logs (chunks + index)
+  grafana_data:        # Grafana dashboards and configuration
+  pgadmin_data:        # pgAdmin configuration
 
+# =============================================================================
+# NETWORKS
+# =============================================================================
+# Two separate networks for isolation:
+# - app_network: Application containers can communicate
+# - observability_network: Monitoring containers + Django (for metrics)
+# =============================================================================
 networks:
   app_network:
-    driver: bridge
+    driver: bridge          # For app containers (Django, PostgreSQL, Nginx, pgAdmin)
   observability_network:
-    driver: bridge
+    driver: bridge          # For monitoring containers (Prometheus, Loki, etc.)
