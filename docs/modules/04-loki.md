@@ -70,41 +70,68 @@ obs-loki:
     - observability_network
 ```
 
+## Configuration
+
 ### loki-config.yml
 
+**Location:** `loki/loki-config.yml`
+
+The Loki configuration defines:
+- Server settings (port, authentication)
+- Storage settings (where to store log data)
+- Schema configuration (how to organize data)
+- Rate limits and retention
+
 ```yaml
-auth_enabled: false
+# =============================================================================
+# AUTHENTICATION
+# =============================================================================
+auth_enabled: false                      # Disable authentication for local development
 
+# =============================================================================
+# SERVER SETTINGS
+# =============================================================================
 server:
-  http_listen_port: 3100
+  http_listen_port: 3100                 # HTTP API port
 
+# =============================================================================
+# COMMON SETTINGS
+# =============================================================================
 common:
-  instance_addr: 127.0.0.1
-  path_prefix: /loki
+  instance_addr: 127.0.0.1              # Instance address (localhost)
+  path_prefix: /loki                     # Root directory for all Loki data
   storage:
     filesystem:
-      chunks_directory: /loki/chunks
-      rules_directory: /loki/rules
-  replication_factor: 1
+      chunks_directory: /loki/chunks     # Directory for compressed log data
+      rules_directory: /loki/rules       # Directory for recording rules
+  replication_factor: 1                  # 1 = single node (no replication)
   ring:
     kvstore:
-      store: inmemory
+      store: inmemory                    # Store ring info in memory
 
+# =============================================================================
+# SCHEMA CONFIGURATION
+# =============================================================================
 schema_config:
   configs:
-    - from: 2024-01-01
-      store: tsdb
-      object_store: filesystem
-      schema: v12
+    - from: 2024-01-01                   # Start using this schema from this date
+      store: tsdb                        # Use TSDB for storage
+      object_store: filesystem           # Store objects on local filesystem
+      schema: v12                        # Schema version (latest)
       index:
-        prefix: index_
-        period: 24h
+        prefix: index_                   # Prefix for index files
+        period: 24h                      # Rotate index every 24 hours
 
+# =============================================================================
+# LIMITS CONFIGURATION
+# =============================================================================
 limits_config:
-  retention_period: 30d
-  ingestion_rate_mb: 16
-  ingestion_burst_size_mb: 32
+  retention_period: 30d                  # Keep logs for 30 days
+  ingestion_rate_mb: 16                  # Max ingestion rate (MB/s)
+  ingestion_burst_size_mb: 32            # Max burst size (MB)
 ```
+
+See [loki/loki-config.yml](https://github.com/MdAshiqurRahmanZayed/django-observability/blob/main/loki/loki-config.yml) for full configuration with comments.
 
 ## Network Access
 
