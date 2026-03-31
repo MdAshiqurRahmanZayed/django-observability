@@ -111,21 +111,22 @@ The application serves as a practical example of how to integrate observability 
 ### docker-compose.yml
 
 ```yaml
+# Django Application
 obs-django:
-  image: django-observability:latest
+  image: django-observability:latest    # Custom built Docker image
   container_name: obs-django
   build:
-    context: .
+    context: .                          # Build from current directory
     dockerfile: Dockerfile
-  restart: on-failure
+  restart: on-failure                   # Restart if container crashes
   ports:
-    - "9000:9000"
+    - "9000:9000"                       # Expose Gunicorn port
   volumes:
-    - static_volume:/app/staticfiles
-    - media_volume:/app/mediafiles
-    - logs_volume:/app/logs
+    - static_volume:/app/staticfiles    # Django static files
+    - media_volume:/app/mediafiles      # User uploaded files
+    - logs_volume:/app/logs             # Application logs (shared with Promtail)
   env_file:
-    - .env
+    - .env                              # Load environment variables
   depends_on:
     obs-postgres:
       condition: service_healthy
