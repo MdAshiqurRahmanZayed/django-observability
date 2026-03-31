@@ -80,6 +80,7 @@ nav:
   - 📚 Tutorial:
     - Getting Started: getting-started.md
     - Architecture Overview: architecture.md
+    - How It Works: how-it-works.md
     - Step 1 - Setup: tutorial/setup.md
     - Step 2 - Metrics: tutorial/metrics.md
     - Step 3 - Logs: tutorial/logs.md
