@@ -1,60 +1,140 @@
+# =============================================================================
+# PROMTAIL CONFIGURATION
+# =============================================================================
+# Promtail is an agent that reads log files and sends them to Loki.
+# It's like a "log mailman" - it picks up logs and delivers them.
+#
+# This configuration defines:
+# - Server settings (port)
+# - Position tracking (remembers where it left off)
+# - Where to send logs (Loki endpoint)
+# - What files to watch and how to parse them
+#
+# Official Documentation: https://grafana.com/docs/loki/latest/send-data/promtail/configuration/
+# =============================================================================
+
+# =============================================================================
+# SERVER SETTINGS
+# =============================================================================
+# Promtail HTTP server configuration
+# - http_listen_port: Port for metrics endpoint
+# - grpc_listen_port: Port for gRPC (0 = disabled)
+# =============================================================================
 server:
-  http_listen_port: 9080
-  grpc_listen_port: 0
+  http_listen_port: 9080                 # Port for Promtail metrics endpoint
+                                          # Available at http://localhost:9080/metrics
+                                          # Used for monitoring Promtail itself
 
+  grpc_listen_port: 0                    # Disable gRPC (not needed)
+                                          # Set to non-zero to enable gRPC
+
+# =============================================================================
+# POSITION TRACKING
+# =============================================================================
+# Remembers where Promtail left off reading each file
+# - Ensures logs aren't re-sent after restart
+# - File is updated after each batch of logs
+# =============================================================================
 positions:
-  filename: /tmp/positions.yaml
+  filename: /tmp/positions.yaml          # File to store read positions
+                                          # Contains last byte position for each file
+                                          # Example:
+                                          #   /var/log/django/django.log:
+                                          #     value: 12345
 
+# =============================================================================
+# CLIENT CONFIGURATION
+# =============================================================================
+# Where to send logs (Loki endpoint)
+# - url: Loki push API endpoint
+# =============================================================================
 clients:
-  - url: http://obs-loki:3100/loki/api/v1/push
+  - url: http://obs-loki:3100/loki/api/v1/push  # Loki push endpoint
+                                                   # obs-loki: Loki container name
+                                                   # 3100: Loki HTTP port
+                                                   # /loki/api/v1/push: Ingestion API
 
+# =============================================================================
+# SCRAPE CONFIGURATIONS
+# =============================================================================
+# What files to watch and how to process them
+# - Each job defines a log source
+# - __path__: File path to watch
+# - labels: Metadata tags added to logs
+# - pipeline_stages: How to process log lines
+# =============================================================================
 scrape_configs:
 
-  # Django app logs (JSON format)
-  - job_name: django
+  # ===========================================================================
+  # JOB 1: Django Application Logs (JSON Format)
+  # ===========================================================================
+  # Watches Django application logs
+  # - File: /var/log/django/django.log
+  # - Format: JSON with levelname, name, message fields
+  # - Parses JSON and extracts labels
+  # ===========================================================================
+  - job_name: django                     # Job name
     static_configs:
       - targets:
-          - localhost
+          - localhost                    # Required but ignored for file watching
         labels:
-          app: django
-          env: dev
-          __path__: /var/log/django/django.log
-    pipeline_stages:
-      - json:
+          app: django                    # Label: app=django
+          env: dev                       # Label: env=dev
+          __path__: /var/log/django/django.log  # File to watch
+                                                   # This is where Django writes logs
+
+    pipeline_stages:                     # How to process each log line
+      - json:                            # Parse as JSON
           expressions:
-            level: levelname
-            logger: name
-            message: message
-      - labels:
-          level:
-          logger:
+            level: levelname             # Extract "levelname" → "level" label
+            logger: name                 # Extract "name" → "logger" label
+            message: message             # Extract "message" → log line content
+      - labels:                          # Convert to Loki labels
+          level:                         # Make "level" searchable
+          logger:                        # Make "logger" searchable
 
-  # Gunicorn access logs
-  - job_name: gunicorn_access
+  # ===========================================================================
+  # JOB 2: Gunicorn Access Logs
+  # ===========================================================================
+  # Watches Gunicorn HTTP access logs
+  # - File: /var/log/django/access.log
+  # - Format: Combined log format
+  # - Adds log_type=access label
+  # ===========================================================================
+  - job_name: gunicorn_access            # Job name
     static_configs:
       - targets:
-          - localhost
+          - localhost                    # Required but ignored
         labels:
-          app: django
-          log_type: access
-          env: dev
-          __path__: /var/log/django/access.log
+          app: django                    # Label: app=django
+          log_type: access               # Label: log_type=access
+          env: dev                       # Label: env=dev
+          __path__: /var/log/django/access.log  # File to watch
+
     pipeline_stages:
       - labels:
-          log_type:
+          log_type:                      # Make log_type a searchable label
 
-  # Gunicorn error logs
-  - job_name: gunicorn_error
+  # ===========================================================================
+  # JOB 3: Gunicorn Error Logs
+  # ===========================================================================
+  # Watches Gunicorn error logs
+  # - File: /var/log/django/error.log
+  # - Format: Error log format
+  # - Adds log_type=error and level=ERROR labels
+  # ===========================================================================
+  - job_name: gunicorn_error             # Job name
     static_configs:
       - targets:
-          - localhost
+          - localhost                    # Required but ignored
         labels:
-          app: django
-          log_type: error
-          level: ERROR
-          env: dev
-          __path__: /var/log/django/error.log
+          app: django                    # Label: app=django
+          log_type: error                # Label: log_type=error
+          level: ERROR                   # Label: level=ERROR
+          env: dev                       # Label: env=dev
+          __path__: /var/log/django/error.log   # File to watch
+
     pipeline_stages:
       - labels:
-          level:
-          log_type:
+          level:                         # Make level a searchable label
+          log_type:                      # Make log_type a searchable label

@@ -1,36 +1,141 @@
-global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
+# =============================================================================
+# PROMETHEUS CONFIGURATION
+# =============================================================================
+# Prometheus is a monitoring system that collects metrics from applications
+# by "scraping" their /metrics endpoints at regular intervals.
+#
+# This configuration defines:
+# - How often to scrape targets (global setting)
+# - Where to send alerts (Alertmanager)
+# - Alert rules to evaluate
+# - What targets to scrape and their endpoints
+#
+# Official Documentation: https://prometheus.io/docs/prometheus/latest/configuration/
+# =============================================================================
 
+# =============================================================================
+# GLOBAL SETTINGS
+# =============================================================================
+# Default settings that apply to all scrape jobs unless overridden
+# =============================================================================
+global:
+  scrape_interval: 15s       # How often to scrape targets (default: 15 seconds)
+                              # Prometheus will check each target every 15 seconds
+                              # to collect new metrics
+
+  evaluation_interval: 15s   # How often to evaluate alert rules (default: 15 seconds)
+                              # Prometheus checks alert conditions every 15 seconds
+                              # to determine if alerts should fire
+
+# =============================================================================
+# ALERTMANAGER CONFIGURATION
+# =============================================================================
+# Where to send alerts when alert rules are triggered
+# - static_configs: Fixed list of Alertmanager instances
+# - targets: Alertmanager container address and port
+# =============================================================================
 alerting:
   alertmanagers:
     - static_configs:
-        - targets: ["obs-alertmanager:9093"]
+        - targets: ["obs-alertmanager:9093"]  # Alertmanager container address
+                                               # obs-alertmanager: Docker container name
+                                               # 9093: Alertmanager HTTP API port
 
+# =============================================================================
+# ALERT RULES
+# =============================================================================
+# Files containing alert rule definitions
+# - Each .yml file in this directory defines one or more alert rules
+# - Rules specify when to trigger alerts and what to do
+# =============================================================================
 rule_files:
-  - /etc/prometheus/rules/*.yml
+  - /etc/prometheus/rules/*.yml  # Load all YAML files in rules directory
+                                  # Each file contains alert definitions
+
+# =============================================================================
+# SCRAPE CONFIGURATIONS
+# =============================================================================
+# What targets to scrape and how often
+# - Each job defines a group of targets to monitor
+# - Prometheus will scrape each target at scrape_interval
+# - Metrics are stored with job and instance labels
+# =============================================================================
 
 scrape_configs:
 
-  - job_name: "prometheus"
+  # ===========================================================================
+  # JOB 1: Prometheus (Self-Monitoring)
+  # ===========================================================================
+  # Scrapes Prometheus itself to monitor its own performance
+  # - Tracks scrape duration, sample count, errors
+  # - Useful for debugging Prometheus issues
+  # ===========================================================================
+  - job_name: "prometheus"               # Job name (appears in metrics as job="prometheus")
     static_configs:
-      - targets: ["localhost:9090"]
+      - targets: ["localhost:9090"]      # Scrape itself
+                                         # localhost: Inside the same container
+                                         # 9090: Prometheus default port
+    # metrics_path: /metrics             # Default path (not needed here)
 
-  - job_name: "django"
+  # ===========================================================================
+  # JOB 2: Django Application
+  # ===========================================================================
+  # Scrapes Django application metrics
+  # - HTTP request counts by method/status
+  # - Request latency histogram
+  # - Database query metrics
+  # - Custom business metrics
+  # ===========================================================================
+  - job_name: "django"                   # Job name (appears in metrics as job="django")
     static_configs:
-      - targets: ["obs-django:9000"]
-    metrics_path: /metrics
+      - targets: ["obs-django:9000"]     # Django container address
+                                         # obs-django: Docker container name
+                                         # 9000: Gunicorn port
+    metrics_path: /metrics               # Endpoint where Django exposes metrics
+                                         # django_prometheus library provides this
 
-  - job_name: "node"
+  # ===========================================================================
+  # JOB 3: Node Exporter (Host Metrics)
+  # ===========================================================================
+  # Scrapes host-level system metrics
+  # - CPU usage by mode (user, system, idle)
+  # - Memory usage (total, available, used)
+  # - Disk usage (filesystem size, used, available)
+  # - Network traffic (bytes in/out)
+  # ===========================================================================
+  - job_name: "node"                     # Job name (appears in metrics as job="node")
     static_configs:
-      - targets: ["obs-node-exporter:9100"]
+      - targets: ["obs-node-exporter:9100"]  # Node Exporter container address
+                                               # obs-node-exporter: Container name
+                                               # 9100: Node Exporter default port
+    # metrics_path: /metrics             # Default path (not needed here)
 
-  - job_name: "loki"
+  # ===========================================================================
+  # JOB 4: Loki (Log System Metrics)
+  # ===========================================================================
+  # Scrapes Loki metrics to monitor log ingestion and storage
+  # - Log ingestion rate
+  # - Storage usage
+  # - Query performance
+  # ===========================================================================
+  - job_name: "loki"                     # Job name (appears in metrics as job="loki")
     static_configs:
-      - targets: ["obs-loki:3100"]
-    metrics_path: /metrics
+      - targets: ["obs-loki:3100"]       # Loki container address
+                                          # obs-loki: Docker container name
+                                          # 3100: Loki HTTP API port
+    metrics_path: /metrics               # Loki exposes metrics here
 
-  - job_name: "grafana"
+  # ===========================================================================
+  # JOB 5: Grafana (UI Metrics)
+  # ===========================================================================
+  # Scrapes Grafana metrics to monitor dashboard usage
+  # - HTTP request rate
+  # - Response duration
+  # - Active users
+  # ===========================================================================
+  - job_name: "grafana"                  # Job name (appears in metrics as job="grafana")
     static_configs:
-      - targets: ["obs-grafana:3000"]
-    metrics_path: /metrics
+      - targets: ["obs-grafana:3000"]    # Grafana container address
+                                          # obs-grafana: Docker container name
+                                          # 3000: Grafana HTTP port
+    metrics_path: /metrics               # Grafana exposes metrics here

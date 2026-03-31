@@ -1,31 +1,88 @@
+# =============================================================================
+# GRAFANA DATASOURCE CONFIGURATION
+# =============================================================================
+# This file configures Grafana datasources automatically on startup.
+# Datasources define where Grafana gets its data from.
+#
+# This configuration defines:
+# - Prometheus datasource (for metrics)
+# - Loki datasource (for logs)
+#
+# Official Documentation: https://grafana.com/docs/grafana/latest/datasources/
+# =============================================================================
+
+# =============================================================================
+# API VERSION
+# =============================================================================
+# Version of the provisioning API
 apiVersion: 1
 
+# =============================================================================
+# DELETE DATASOURCES
+# =============================================================================
+# Delete these datasources on startup (clean slate)
+# - Ensures fresh configuration each time
+# - Removes any manually created datasources
+# =============================================================================
 deleteDatasources:
-  - name: Prometheus
-    orgId: 1
-  - name: Loki
+  - name: Prometheus                      # Delete old Prometheus datasource
+    orgId: 1                              # Organization ID (1 = default)
+  - name: Loki                            # Delete old Loki datasource
     orgId: 1
 
+# =============================================================================
+# DATASOURCES
+# =============================================================================
+# Datasources to create on startup
+# - Each datasource connects Grafana to a data source
+# - Prometheus: For metrics and PromQL queries
+# - Loki: For logs and LogQL queries
+# =============================================================================
 datasources:
 
-  - name: Prometheus
-    type: prometheus
-    uid: prometheus
-    orgId: 1
-    access: proxy
-    url: http://obs-prometheus:9090
-    isDefault: true
-    editable: false
-    version: 1
+  # ===========================================================================
+  # PROMETHEUS DATASOURCE
+  # ===========================================================================
+  # Connects Grafana to Prometheus for metrics visualization
+  # - type: prometheus (metrics)
+  # - url: Prometheus container address
+  # - isDefault: Default datasource for new panels
+  # ===========================================================================
+  - name: Prometheus                      # Display name in Grafana
+    type: prometheus                       # Datasource type
+    uid: prometheus                        # Unique identifier
+    orgId: 1                               # Organization ID
+    access: proxy                          # Access mode
+                                           # proxy: Grafana queries Prometheus (recommended)
+                                           # direct: Browser queries Prometheus (not recommended)
+    url: http://obs-prometheus:9090       # Prometheus URL
+                                           # obs-prometheus: Docker container name
+                                           # 9090: Prometheus HTTP port
+    isDefault: true                        # Default datasource for new panels
+    editable: false                        # Can't edit in UI (provisioned)
+    version: 1                             # Configuration version
 
-  - name: Loki
-    type: loki
-    uid: loki
-    orgId: 1
-    access: proxy
-    url: http://obs-loki:3100
-    isDefault: false
-    editable: false
-    version: 1
+  # ===========================================================================
+  # LOKI DATASOURCE
+  # ===========================================================================
+  # Connects Grafana to Loki for log visualization
+  # - type: loki (logs)
+  # - url: Loki container address
+  # - maxLines: Maximum lines to display
+  # ===========================================================================
+  - name: Loki                            # Display name in Grafana
+    type: loki                             # Datasource type
+    uid: loki                              # Unique identifier
+    orgId: 1                               # Organization ID
+    access: proxy                          # Access mode
+                                           # proxy: Grafana queries Loki (recommended)
+    url: http://obs-loki:3100             # Loki URL
+                                           # obs-loki: Docker container name
+                                           # 3100: Loki HTTP port
+    isDefault: false                       # Not default (Prometheus is default)
+    editable: false                        # Can't edit in UI (provisioned)
+    version: 1                             # Configuration version
     jsonData:
-      maxLines: 1000
+      maxLines: 1000                       # Max log lines to display in Explore
+                                           # Increase for more context
+                                           # Decrease for faster queries

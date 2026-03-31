@@ -1,55 +1,119 @@
-global:
-  resolve_timeout: 5m
-  slack_api_url: "SLACK_WEBHOOK_URL_PLACEHOLDER"
+# =============================================================================
+# ALERTMANAGER CONFIGURATION
+# =============================================================================
+# Alertmanager receives alerts from Prometheus and routes them to notification
+# channels (Slack, email, etc.). It groups, deduplicates, and routes alerts.
+#
+# This configuration defines:
+# - Global settings (timeouts, Slack webhook)
+# - Routing rules (which alerts go where)
+# - Receivers (notification targets like Slack channels)
+# - Inhibit rules (suppress lower severity alerts)
+#
+# Official Documentation: https://prometheus.io/docs/alerting/latest/configuration/
+# =============================================================================
 
+# =============================================================================
+# GLOBAL SETTINGS
+# =============================================================================
+# Default settings that apply to all receivers
+# - resolve_timeout: How long to wait before marking alert as resolved
+# - slack_api_url: Slack webhook URL (replaced at runtime)
+# =============================================================================
+global:
+  resolve_timeout: 5m                    # Wait 5 minutes after alert condition clears
+                                          # before sending "resolved" notification
+                                          # Prevents flapping alerts from spamming
+
+  slack_api_url: "SLACK_WEBHOOK_URL_PLACEHOLDER"  # Replaced at runtime with SLACK_WEBHOOK_URL
+                                                    # Set in .env file
+                                                    # See: https://api.slack.com/messaging/webhooks
+
+# =============================================================================
+# ROUTING
+# =============================================================================
+# How alerts are routed to receivers
+# - group_by: How to group alerts (reduce notifications)
+# - group_wait: Wait time before sending first alert in group
+# - group_interval: Wait time between groups
+# - repeat_interval: How often to repeat unresolved alerts
+# - receiver: Default receiver for alerts
+# - routes: Specific routing rules
+# =============================================================================
 route:
-  group_by: ["alertname", "category"]
-  group_wait: 30s
-  group_interval: 5m
-  repeat_interval: 12h
-  receiver: "slack-default"
-  routes:
+  group_by: ["alertname", "category"]   # Group alerts by name and category
+                                          # Example: All "DjangoDown" + "http" alerts together
+
+  group_wait: 30s                        # Wait 30 seconds to collect alerts before sending
+                                          # First notification includes all alerts in group
+
+  group_interval: 5m                     # Wait 5 minutes between sending groups
+                                          # Prevents rapid-fire notifications
+
+  repeat_interval: 12h                   # Repeat unresolved alert every 12 hours
+                                          # Keeps team aware of ongoing issues
+
+  receiver: "slack-default"              # Default receiver (fallback)
+                                          # Used if no specific route matches
+
+  routes:                                # Specific routing rules (evaluated in order)
     - match:
-        category: db
+        category: db                     # Route database alerts to #alerts-db
       receiver: "slack-db"
+
     - match:
-        alertname: DjangoDown
-        category: http
+        alertname: DjangoDown            # Route DjangoDown to #alerts-http
+        category: http                   # More urgent (repeat every 10m)
       receiver: "slack-http"
       repeat_interval: 10m
+
     - match:
-        alertname: Django5xxError
+        alertname: Django5xxError        # Route 5xx errors to #alerts-http
+        category: http                   # Fast notification (group_wait: 10s)
+      receiver: "slack-http"
+      group_wait: 10s
+      repeat_interval: 5m
+
+    - match:
+        alertname: Django4xxError        # Route 4xx errors to #alerts-http
         category: http
       receiver: "slack-http"
       group_wait: 10s
       repeat_interval: 5m
+
     - match:
-        alertname: Django4xxError
-        category: http
+        category: http                   # Other HTTP alerts
       receiver: "slack-http"
-      group_wait: 10s
-      repeat_interval: 5m
+
     - match:
-        category: http
-      receiver: "slack-http"
-    - match:
-        category: latency
+        category: latency                # Latency alerts
       receiver: "slack-latency"
+
     - match:
-        category: infrastructure
+        category: infrastructure         # Infrastructure alerts
       receiver: "slack-infra"
 
+# =============================================================================
+# RECEIVERS
+# =============================================================================
+# Where to send notifications
+# - Each receiver defines a Slack channel and message format
+# - Templates use Go template syntax
+# =============================================================================
 receivers:
 
+  # ===========================================================================
+  # DEFAULT RECEIVER: #alerts
+  # ===========================================================================
   - name: "slack-default"
     slack_configs:
-      - channel: "#alerts"
-        username: "Observability Bot"
-        icon_emoji: ":bell:"
-        color: '{{ if eq .Status "firing" }}{{ if eq (index .Alerts 0).Labels.severity "critical" }}#FF0000{{ else }}#FFA500{{ end }}{{ else }}#36A64F{{ end }}'
-        title: '{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} [{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}'
-        title_link: 'http://localhost:3000/alerting/Prometheus/{{ .GroupLabels.alertname }}/find'
-        text: |
+      - channel: "#alerts"               # Slack channel name
+        username: "Observability Bot"    # Bot username
+        icon_emoji: ":bell:"             # Bot icon
+        color: '{{ if eq .Status "firing" }}{{ if eq (index .Alerts 0).Labels.severity "critical" }}#FF0000{{ else }}#FFA500{{ end }}{{ else }}#36A64F{{ end }}'  # Color: red=critical, orange=warning, green=resolved
+        title: '{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} [{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}'  # Message title
+        title_link: 'http://localhost:3000/alerting/Prometheus/{{ .GroupLabels.alertname }}/find'  # Link to Grafana
+        text: |                          # Message body
           {{ range .Alerts }}
           {{ if eq .Labels.severity "critical" }}🚨 *CRITICAL*{{ else if eq .Labels.severity "warning" }}⚠️ *WARNING*{{ else }}ℹ️ *INFO*{{ end }} — {{ .Annotations.summary }}
 
@@ -58,8 +122,11 @@ receivers:
           🔖 *Category:* `{{ .Labels.category }}`
           🕐 *Started:* {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
           {{ end }}
-        send_resolved: true
+        send_resolved: true              # Send notification when alert resolves
 
+  # ===========================================================================
+  # DATABASE RECEIVER: #alerts-db
+  # ===========================================================================
   - name: "slack-db"
     slack_configs:
       - channel: "#alerts-db"
@@ -79,6 +146,11 @@ receivers:
           {{ end }}
         send_resolved: true
 
+  # ===========================================================================
+  # HTTP RECEIVER (FIRING ONLY): #alerts-http
+  # ===========================================================================
+  # Only sends firing alerts, not resolved
+  # ===========================================================================
   - name: "slack-http-firing-only"
     slack_configs:
       - channel: "#alerts-http"
@@ -96,8 +168,11 @@ receivers:
           🔖 *Category:* `http`
           🕐 *Started:* {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
           {{ end }}
-        send_resolved: false
+        send_resolved: false             # Don't send resolved notifications
 
+  # ===========================================================================
+  # HTTP RECEIVER: #alerts-http
+  # ===========================================================================
   - name: "slack-http"
     slack_configs:
       - channel: "#alerts-http"
@@ -117,6 +192,9 @@ receivers:
           {{ end }}
         send_resolved: true
 
+  # ===========================================================================
+  # LATENCY RECEIVER: #alerts-latency
+  # ===========================================================================
   - name: "slack-latency"
     slack_configs:
       - channel: "#alerts-latency"
@@ -136,6 +214,9 @@ receivers:
           {{ end }}
         send_resolved: true
 
+  # ===========================================================================
+  # INFRASTRUCTURE RECEIVER: #alerts-infra
+  # ===========================================================================
   - name: "slack-infra"
     slack_configs:
       - channel: "#alerts-infra"
@@ -155,9 +236,16 @@ receivers:
           {{ end }}
         send_resolved: true
 
+# =============================================================================
+# INHIBIT RULES
+# =============================================================================
+# Suppress lower severity alerts if higher severity is active
+# - If critical alert fires, suppress warning for same alertname
+# - Reduces notification noise
+# =============================================================================
 inhibit_rules:
   - source_match:
-      severity: "critical"
+      severity: "critical"               # If critical alert is firing
     target_match:
-      severity: "warning"
-    equal: ["alertname"]
+      severity: "warning"                # Suppress warning alert
+    equal: ["alertname"]                 # Only if same alertname

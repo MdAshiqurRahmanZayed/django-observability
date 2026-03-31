@@ -1,31 +1,123 @@
-auth_enabled: false
+# =============================================================================
+# LOKI CONFIGURATION
+# =============================================================================
+# Loki is a log aggregation system that stores and indexes logs with labels.
+# It's designed to be cost-effective by only indexing metadata (labels),
+# not the full log text (like Prometheus but for logs).
+#
+# This configuration defines:
+# - Server settings (port, authentication)
+# - Storage settings (where to store log data)
+# - Schema configuration (how to organize data)
+# - Rate limits and retention
+#
+# Official Documentation: https://grafana.com/docs/loki/latest/configure/
+# =============================================================================
 
+# =============================================================================
+# AUTHENTICATION
+# =============================================================================
+# Whether to require authentication for API access
+# - false: No authentication required (development mode)
+# - true: Require authentication (production mode)
+# =============================================================================
+auth_enabled: false                      # Disable authentication for local development
+
+# =============================================================================
+# SERVER SETTINGS
+# =============================================================================
+# HTTP server configuration
+# - http_listen_port: Port for HTTP API
+# - Loki doesn't have a web UI, use Grafana to query logs
+# =============================================================================
 server:
-  http_listen_port: 3100
+  http_listen_port: 3100                 # HTTP API port
+                                          # Loki exposes API at http://localhost:3100
+                                          # Endpoints:
+                                          #   - /loki/api/v1/push (ingest logs)
+                                          #   - /loki/api/v1/query (query logs)
+                                          #   - /ready (health check)
 
+# =============================================================================
+# COMMON SETTINGS
+# =============================================================================
+# Settings shared across all Loki components
+# - instance_addr: Address for this instance
+# - path_prefix: Root directory for Loki data
+# - storage: Where to store data (filesystem in this case)
+# - replication_factor: Number of replicas (1 for single node)
+# - ring: Service discovery configuration
+# =============================================================================
 common:
-  instance_addr: 127.0.0.1
-  path_prefix: /loki
+  instance_addr: 127.0.0.1              # Instance address (localhost)
+                                          # Used for service discovery in cluster mode
+
+  path_prefix: /loki                     # Root directory for all Loki data
+                                          # All data will be stored under /loki/
+
   storage:
-    filesystem:
-      chunks_directory: /loki/chunks
-      rules_directory: /loki/rules
-  replication_factor: 1
+    filesystem:                          # Use local filesystem for storage
+      chunks_directory: /loki/chunks     # Directory for compressed log data
+                                          # Actual log lines are stored here
+      rules_directory: /loki/rules       # Directory for recording rules
+                                          # Pre-computed query results
+
+  replication_factor: 1                  # Number of replicas per log entry
+                                          # 1: Single node (no replication)
+                                          # 3: Cluster mode (3 copies)
+
   ring:
     kvstore:
-      store: inmemory
+      store: inmemory                    # Store ring information in memory
+                                          # Used for service discovery in cluster mode
 
+# =============================================================================
+# SCHEMA CONFIGURATION
+# =============================================================================
+# How Loki organizes and stores data over time
+# - configs: List of schema configurations
+# - from: Start date for this schema
+# - store: Storage backend type
+# - object_store: Where to store objects
+# - schema: Schema version
+# - index: Index configuration
+# =============================================================================
 schema_config:
   configs:
-    - from: 2024-01-01
-      store: tsdb
-      object_store: filesystem
-      schema: v12
-      index:
-        prefix: index_
-        period: 24h
+    - from: 2024-01-01                   # Start using this schema from this date
+                                           # Allows gradual migration between schemas
 
+      store: tsdb                        # Use TSDB (Time Series Database) for storage
+                                          # Efficient for time-series log data
+
+      object_store: filesystem           # Store objects on local filesystem
+                                          # Alternative: s3, gcs, azure for cloud
+
+      schema: v12                        # Schema version (latest)
+                                          # Defines how data is organized
+
+      index:
+        prefix: index_                   # Prefix for index files
+                                          # Files will be named: index_2024-01-01, etc.
+
+        period: 24h                      # Rotate index every 24 hours
+                                          # Creates a new index file each day
+
+# =============================================================================
+# LIMITS CONFIGURATION
+# =============================================================================
+# Rate limits and retention policies
+# - retention_period: How long to keep logs
+# - ingestion_rate_mb: Max ingestion rate per second
+# - ingestion_burst_size_mb: Max burst size
+# =============================================================================
 limits_config:
-  retention_period: 30d
-  ingestion_rate_mb: 16
-  ingestion_burst_size_mb: 32
+  retention_period: 30d                  # Keep logs for 30 days
+                                          # Logs older than 30 days are automatically deleted
+                                          # Increase for longer retention (requires more storage)
+
+  ingestion_rate_mb: 16                  # Max ingestion rate (MB/s)
+                                          # Prevents overwhelming Loki with too many logs
+
+  ingestion_burst_size_mb: 32            # Max burst size (MB)
+                                          # Allows temporary spikes in log volume
